@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.4.16)  16 APR 2019 09:47
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.4.16)  16 APR 2019 09:52
 entering extended mode
  \write18 enabled.
  %&-line parsing enabled.
@@ -1078,36 +1078,7 @@ Overfull \hbox (14.98848pt too wide) in paragraph at lines 66--84
  []
 
 
-LaTeX Warning: File `screen2.png' not found on input line 88.
-
-
-! Package pdftex.def Error: File `screen2.png' not found: using draft setting.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.88   \includegraphics[scale=.6]{screen2.png}
-                                              
-? 
-
-LaTeX Warning: File `screen1.png' not found on input line 95.
-
-
-! Package pdftex.def Error: File `screen1.png' not found: using draft setting.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.95   \includegraphics[scale=.6]{screen1.png}
-                                              
-? 
-[1
-
-{/usr/local/texlive/2018/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-
-LaTeX Warning: File `schematic.png' not found on input line 110.
+LaTeX Warning: File `schematic.png' not found on input line 90.
 
 
 ! Package pdftex.def Error: File `schematic.png' not found: using draft setting
@@ -1117,57 +1088,29 @@ See the pdftex.def package documentation for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.110   \includegraphics[scale=.2]{schematic.png}
-                                                 
+l.90   \includegraphics[scale=.6]{schematic.png}
+                                                
 ? 
-\openout4 = `prelim-report.pyg'.
+[1
 
-(./_minted-prelim-report/default-pyg-prefix.pygstyle)
-(./_minted-prelim-report/default.pygstyle)
-runsystem(pygmentize -l c -f latex -P commandprefix=PYG -F tokenmerge -o _minte
-d-prelim-report/E1C06D85AE7B8B032BEF47E42E4C08F99F228231460C1648D1A1525911E8BCD
-B.pygtex prelim-report.pyg)...executed.
-
-
-(./_minted-prelim-report/E1C06D85AE7B8B032BEF47E42E4C08F99F228231460C1648D1A152
-5911E8BCDB.pygtex
-Underfull \hbox (badness 10000) in paragraph at lines 115--1
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 115--1
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 115--1
-
- []
-
-)
-runsystem(rm _minted-prelim-report/37FF409C478ACE73D74EE094529310329F228231460C
-1648D1A1525911E8BCDB.pygtex)...executed.
-
- [2] (./prelim-report.aux)
-runsystem(rm prelim-report.pyg)...executed.
-
- ) 
+{/usr/local/texlive/2018/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
+(./prelim-report.aux) ) 
 Here is how much of TeX's memory you used:
- 27507 strings out of 492649
- 570710 string characters out of 6129622
- 649903 words of memory out of 5000000
- 30996 multiletter control sequences out of 15000+600000
+ 27291 strings out of 492649
+ 567453 string characters out of 6129622
+ 649765 words of memory out of 5000000
+ 30795 multiletter control sequences out of 15000+600000
  535975 words of font info for 42 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 55i,7n,67p,10383b,275s stack positions out of 5000i,500n,10000p,200000b,80000s
-</usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb
-></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><
-/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb>
-Output written on prelim-report.pdf (2 pages, 42282 bytes).
+ 55i,6n,67p,10383b,275s stack positions out of 5000i,500n,10000p,200000b,80000s
+</usr/local/texlive/2018/texmf-dist/fonts/type1/public/a
+msfonts/cm/cmbx12.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/am
+sfonts/cm/cmr12.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsf
+onts/cm/cmtt12.pfb>
+Output written on prelim-report.pdf (1 page, 37555 bytes).
 PDF statistics:
- 26 PDF objects out of 1000 (max. 8388607)
- 18 compressed objects within 1 object stream
+ 23 PDF objects out of 1000 (max. 8388607)
+ 16 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  13 words of extra memory for PDF output out of 10000 (max. 10000000)
 

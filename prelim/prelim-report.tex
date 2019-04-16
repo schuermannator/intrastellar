@@ -83,43 +83,23 @@ add more
   \end{tabular}
 \end{center}
 
-\begin{figure}[h!]
-  \centering
-  \includegraphics[scale=.6]{screen2.png}
-  \caption{659 Hz doorbell signal}
-  \label{fig:screen1}
-\end{figure}
-
-\begin{figure}[h!]
-  \centering
-  \includegraphics[scale=.6]{screen1.png}
-  \caption{523 Hz doorbell signal}
-  \label{fig:screen2}
-\end{figure}
-
 \section*{Hardware Design}
-The hardware was relatively straightforward. In the case of choosing load resistance for the phototransistor, trial and error was used (within the reasonable guesses from the component's documentation) such that there was enough fluctuation to have a discernible (and reliable) difference between the two different states (light and dark). Noise was mitigated through the use of capacitors on the power rails of integrated circuits as well as between the speaker load and the opamp. 
 
-\section*{Software Design}
-The software included the steps necessary to speed up the CPU clock through using an internal phase-locked loop. Further discussion is deferred as this was covered in Assignment 3. The remainder of the software implements simple digital logic and interfacing with the DAC and ADC subsystems. The main 'loop' for the program simply reads from the ADC to retrieve the light measurement, and lights or dims the LED accordingly. In the same loop, a state which synthesizes the doorbell sounds is triggered through pressing the switch. Most of the functionality is decomposed in discrete functions such as \codeword{clock_setup()} for raising the CPU clock, or \codeword{ding()} and \codeword{dong()} for implementing the waveform synthesis. 
-
-\section*{Final Solution Details}
-The final circuit schematic is included below: 
 \begin{figure}[h!]
   \centering
-  \includegraphics[scale=.2]{schematic.png}
-  \caption{Circuit Schematic}
+  \includegraphics[scale=.6]{schematic.png}
+  \caption{Preliminary Hardware Schematic}
   \label{fig:schematic}
 \end{figure}
 
-The completed source code is included below: \newline
-\newline
-\newline
-\begin{minted}{c}
+schematic in Figure \ref{fig:schematic}
 
 
-\end{minted}
+\section*{Software Design}
+The software
 
-\section*{Discussion}
-Floating point numbers were utilized for the generation of the sinusoid. That is, floating-point sine calculations occurred every iteration of the program. This was likely a rather poor performing implementation. The solution could be further improved through the use of integer calculations and even precomputing the values which needed to be written to the analog output thereby reducing the calculation to constant time lookup. 
+%\begin{minted}{c}
+%\end{minted}
+%\section*{Discussion}
+
 \end{document}
