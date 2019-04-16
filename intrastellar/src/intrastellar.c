@@ -18,6 +18,25 @@
 //#define uint8_t unsigned char
 
 uint8_t lcd_read_data();
+void spi_begin();
+/* Text functions */
+void    lcd_text_mode(void);
+void    lcd_text_set_cursor(uint16_t x, uint16_t y);
+void    lcd_text_color(uint16_t foreColor, uint16_t bgColor);
+void    lcd_text_transparent(uint16_t foreColor);
+//void    textEnlarge(uint8_t scale);
+void    lcd_text_write(const char* buffer, uint16_t len);
+void    lcd_cursor_blink(uint8_t rate);
+
+/* Low level access */
+void    lcd_write_reg(uint8_t reg, uint8_t val);
+uint8_t lcd_read_reg(uint8_t reg);
+void    lcd_write_data(uint8_t d);
+uint8_t lcd_read_data(void);
+void    lcd_write_command(uint8_t d);
+uint8_t lcd_read_status(void);
+
+
 
 // Colors (RGB565)
 #define	RA8875_BLACK            0x0000 ///< Black Color
@@ -372,6 +391,7 @@ void lcd_spi_setup() {
 
 	// MSB first (default)
 	S0SPCR &= ~(1<<6);
+	wait_ticks(100);
 }
 
 void interrupt_setup() {
@@ -418,7 +438,7 @@ void clock_test() {
 
 int read_controller() {
 	int controller = 0;
-	int status;
+	volatile int status;
 	int read;
 
 	// new packet assert SS
@@ -519,8 +539,10 @@ void spi_begin() {
 uint8_t spi_send(uint8_t data) {
 	S0SPDR = data;
 	while((S0SPSR & (1<<7)) == 0) {}
-	int status = S0SPSR;
-	int read = S0SPDR;
+	volatile int status = S0SPSR;
+	volatile int read = S0SPDR;
+	while(1) {}
+	return read;
 }
 
 void spi_end() {
@@ -624,7 +646,8 @@ uint8_t lcd_read_status(void)
 }
 
 void lcd_pll_init() {
-	lcd_write_reg(RA8875_PLLC1, RA8875_PLLC1_PLLDIV1 + 10);
+	//lcd_write_reg(RA8875_PLLC1, RA8875_PLLC1_PLLDIV1 + 10); -> should be 11
+	lcd_write_reg(RA8875_PLLC1, 0x0b);
 	wait_ticks(100); //delay(1);
 	lcd_write_reg(RA8875_PLLC2, RA8875_PLLC2_DIV4);
 	wait_ticks(100); //delay(1);
@@ -634,6 +657,9 @@ void lcd_pll_init() {
 void lcd_init(void) {
 	uint16_t _height = 480;
 	uint16_t _width = 800;
+
+	uint8_t x = lcd_read_reg(0);
+	while(x != 0x75) {}
 
 	lcd_pll_init();
 	lcd_write_reg(RA8875_SYSR, RA8875_SYSR_16BPP | RA8875_SYSR_MCU8);
@@ -664,13 +690,13 @@ void lcd_init(void) {
 	lcd_write_reg(RA8875_HDWR, (_width / 8) - 1);                          // H width: (HDWR + 1) * 8 = 480
 	lcd_write_reg(RA8875_HNDFTR, RA8875_HNDFTR_DE_HIGH + hsync_finetune);
 	lcd_write_reg(RA8875_HNDR, (hsync_nondisp - hsync_finetune - 2)/8);    // H non-display: HNDR * 8 + HNDFTR + 2 = 10
-	lcd_write_reg(RA8875_HSTR, hsync_start/8 - 1);                         // Hsync start: (HSTR + 1)*8
+	lcd_write_reg(RA8875_HSTR, (hsync_start/8) - 1);                         // Hsync start: (HSTR + 1)*8
 	lcd_write_reg(RA8875_HPWR, RA8875_HPWR_LOW + (hsync_pw/8 - 1));        // HSync pulse width = (HPWR+1) * 8
 
 	/* Vertical settings registers */
 	lcd_write_reg(RA8875_VDHR0, (uint16_t)(_height - 1) & 0xFF);
 	lcd_write_reg(RA8875_VDHR1, (uint16_t)(_height - 1) >> 8);
-	lcd_write_reg(RA8875_VNDR0, vsync_nondisp-1);                          // V non-display period = VNDR + 1
+	lcd_write_reg(RA8875_VNDR0, vsync_nondisp); // used to be vsync_nondisp-1                         // V non-display period = VNDR + 1
 	lcd_write_reg(RA8875_VNDR1, vsync_nondisp >> 8);
 	lcd_write_reg(RA8875_VSTR0, vsync_start-1);                            // Vsync start position = VSTR + 1
 	lcd_write_reg(RA8875_VSTR1, vsync_start >> 8);
@@ -709,6 +735,26 @@ void lcd_text_mode()
 	wait_ticks(1000);
 }
 
+/**************************************************************************/
+/*!
+      Sets the display in text mode (as opposed to graphics mode)
+      @param x The x position of the cursor (in pixels, 0..1023)
+      @param y The y position of the cursor (in pixels, 0..511)
+*/
+/**************************************************************************/
+void lcd_text_set_cursor(uint16_t x, uint16_t y)
+{
+	/* Set cursor location */
+	lcd_write_command(0x2A);
+	lcd_write_data(x & 0xFF);
+	lcd_write_command(0x2B);
+	lcd_write_data(x >> 8);
+	lcd_write_command(0x2C);
+	lcd_write_data(y & 0xFF);
+	lcd_write_command(0x2D);
+	lcd_write_data(y >> 8);
+}
+
 void lcd_cursor_blink(uint8_t rate){
 	lcd_write_command(RA8875_MWCR0);
 	uint8_t temp = lcd_read_data();
@@ -726,10 +772,87 @@ void lcd_cursor_blink(uint8_t rate){
 	wait_ticks(1000);
 }
 
+/**************************************************************************/
+/*!
+      Renders some text on the screen when in text mode
+      @param buffer    The buffer containing the characters to render
+      @param len       The size of the buffer in bytes
+*/
+/**************************************************************************/
+void lcd_text_write(const char* buffer, uint16_t len) {
+	//if (len == 0) len = strlen(buffer);
+	lcd_write_command(RA8875_MRWC);
+	for (uint16_t i=0;i<len;i++) {
+		lcd_write_data(buffer[i]);
+		wait_ticks(100);
+	}
+}
+
+/**************************************************************************/
+/*!
+      Sets the fore and background color when rendering text
+      @param foreColor The RGB565 color to use when rendering the text
+      @param bgColor   The RGB565 colot to use for the background
+*/
+/**************************************************************************/
+void lcd_text_color(uint16_t foreColor, uint16_t bgColor) {
+	/* Set For Color */
+	lcd_write_command(0x63);
+	lcd_write_data((foreColor & 0xf800) >> 11);
+	lcd_write_command(0x64);
+	lcd_write_data((foreColor & 0x07e0) >> 5);
+	lcd_write_command(0x65);
+	lcd_write_data((foreColor & 0x001f));
+
+	/* Set Background Color */
+	lcd_write_command(0x60);
+	lcd_write_data((bgColor & 0xf800) >> 11);
+	lcd_write_command(0x61);
+	lcd_write_data((bgColor & 0x07e0) >> 5);
+	lcd_write_command(0x62);
+	lcd_write_data((bgColor & 0x001f));
+
+	/* Clear transparency flag */
+	lcd_write_command(0x22);
+	uint8_t temp = lcd_read_data();
+	temp &= ~(1<<6); // Clear bit 6
+	lcd_write_data(temp);
+}
+
+/**************************************************************************/
+/*!
+      Sets the fore color when rendering text with a transparent bg
+      @param foreColor The RGB565 color to use when rendering the text
+*/
+/**************************************************************************/
+void lcd_text_transparent(uint16_t foreColor)
+{
+	/* Set Fore Color */
+	lcd_write_command(0x63);
+	lcd_write_data((foreColor & 0xf800) >> 11);
+	lcd_write_command(0x64);
+	lcd_write_data((foreColor & 0x07e0) >> 5);
+	lcd_write_command(0x65);
+	lcd_write_data((foreColor & 0x001f));
+
+	/* Set transparency flag */
+	lcd_write_command(0x22);
+	uint8_t temp = lcd_read_data();
+	temp |= (1<<6); // Set bit 6
+	lcd_write_data(temp);
+}
+
+void lcd_fill_screen(uint16_t color) {
+	//rectHelper(0, 0, _width-1, _height-1, color, true);
+}
+
 int display() {
 	lcd_init();
 	lcd_text_mode();
+	lcd_text_set_cursor(100, 100);
 	lcd_cursor_blink(5);
+	const char* test = "this is a test";
+	lcd_text_write(test, 14);
 
 	return 0;
 }
@@ -851,7 +974,32 @@ int main(void) {
 	//eep_write();
 	//int test = eep_read();
 
-	display();
+	//display();
+
+
+
+
+	lcd_init();
+	//displayOn(true);
+	lcd_write_reg(RA8875_PWRR, RA8875_PWRR_NORMAL | RA8875_PWRR_DISPON);
+	//GPIOX(true);      // Enable TFT - display enable tied to GPIOX
+	lcd_write_reg(RA8875_GPIOX, 1);
+	//PWM1config(true, RA8875_PWM_CLK_DIV1024); // PWM output for backlight
+	lcd_write_reg(RA8875_P1CR, RA8875_P1CR_ENABLE | (RA8875_PWM_CLK_DIV1024 & 0xF));
+	//PWM1out(255);
+	lcd_write_reg(RA8875_P1DCR, 255);
+	lcd_fill_screen(RA8875_BLACK);
+
+	while(1) {}
+	lcd_text_mode();
+	lcd_text_set_cursor(100, 100);
+	lcd_cursor_blink(32);
+	char test[15] = "Hello, World! ";
+	lcd_text_transparent(RA8875_WHITE);
+	lcd_text_color(RA8875_WHITE, RA8875_RED);
+	lcd_text_write(test, 15);
+	//lcd_write_command(0x01);
+	//led_write_data(0x80);
 
 	while (1) {}
     return 0;
