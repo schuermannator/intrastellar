@@ -1,4 +1,4 @@
 ``` bash
-$ pdflatex -shell-escape prelim_report.tex
+$ pdflatex -shell-escape prelim-report.tex
 M-x flyspell-mode
 ```

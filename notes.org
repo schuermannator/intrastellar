@@ -1,0 +1,10 @@
+* Prelim Draft
+How hold state of the game?
+Array in mem?
+
+example interaction: press button, shoot gun, contact baddie, explode
+
+Bitmaps for baddies? -> programatically generate?
+
+EEPROM Help
+SPI Debug Help

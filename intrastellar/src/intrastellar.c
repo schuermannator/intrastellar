@@ -342,6 +342,7 @@ void gpio_setup() {
 	// SPI SS
 	FIO0DIR |= (1<<9); // P0.9 is SS for PS2
 	FIO0DIR |= (1<<7); // P0.7 is SS for LCD
+	FIO0DIR |= (1<<6); // P0.6 is RST for LCD
 }
 
 void spi_setup() {
@@ -374,14 +375,14 @@ void lcd_spi_setup() {
 	// 96 MHz / 8 => 12 MHz SPI clock (11)
 	// 96 / 2 => 48 MHz (10)
 	PCLKSEL0 &= ~(1<<16);
-	PCLKSEL0 |= (1<<17);
+	PCLKSEL0 &= ~(1<<17); // was high
 
 	// 48 MHz / 12 => 4 MHz SCK
 	// has to be even, >= 8
-	S0SPCCR |= 0xC;
+	S0SPCCR = 0xC;
 
 	// phase (default)
-	S0SPCR &= ~(1<<3);
+	S0SPCR |= (1<<3);
 
 	// active low clock
 	S0SPCR |= (1<<4);
@@ -541,7 +542,7 @@ uint8_t spi_send(uint8_t data) {
 	while((S0SPSR & (1<<7)) == 0) {}
 	volatile int status = S0SPSR;
 	volatile int read = S0SPDR;
-	while(1) {}
+	//while(1) {}
 	return read;
 }
 
@@ -624,6 +625,7 @@ void lcd_write_command(uint8_t d)
 	spi_begin();
 	spi_send(RA8875_CMDWRITE);
 	spi_send(d);
+	//while(1) {}
 	spi_end();
 	lcd_free();
 }
@@ -658,8 +660,8 @@ void lcd_init(void) {
 	uint16_t _height = 480;
 	uint16_t _width = 800;
 
-	uint8_t x = lcd_read_reg(0);
-	while(x != 0x75) {}
+	//uint8_t x = lcd_read_reg(0);
+	//while(x != 0x75) {}
 
 	lcd_pll_init();
 	lcd_write_reg(RA8875_SYSR, RA8875_SYSR_16BPP | RA8875_SYSR_MCU8);
@@ -977,7 +979,10 @@ int main(void) {
 	//display();
 
 
-
+	FIO0PIN &= ~(1<<6);
+	wait_ticks(1000);
+	FIO0PIN |= (1<<6);
+	wait_ticks(10000);
 
 	lcd_init();
 	//displayOn(true);
@@ -988,9 +993,9 @@ int main(void) {
 	lcd_write_reg(RA8875_P1CR, RA8875_P1CR_ENABLE | (RA8875_PWM_CLK_DIV1024 & 0xF));
 	//PWM1out(255);
 	lcd_write_reg(RA8875_P1DCR, 255);
-	lcd_fill_screen(RA8875_BLACK);
+	//lcd_fill_screen(RA8875_BLACK);
 
-	while(1) {}
+	//while(1) {}
 	lcd_text_mode();
 	lcd_text_set_cursor(100, 100);
 	lcd_cursor_blink(32);
