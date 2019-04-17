@@ -379,13 +379,14 @@ void lcd_spi_setup() {
 
 	// 48 MHz / 12 => 4 MHz SCK
 	// has to be even, >= 8
-	S0SPCCR = 0xC;
+	//S0SPCCR = 0xC;
+	S0SPCCR = 0xc0;
 
 	// phase (default)
-	S0SPCR |= (1<<3);
+	S0SPCR &= ~(1<<3);
 
-	// active low clock
-	S0SPCR |= (1<<4);
+	// active high clock
+	S0SPCR &= ~(1<<4);
 
 	// operate in master mode
 	S0SPCR |= (1<<5);
@@ -660,8 +661,8 @@ void lcd_init(void) {
 	uint16_t _height = 480;
 	uint16_t _width = 800;
 
-	//uint8_t x = lcd_read_reg(0);
-	//while(x != 0x75) {}
+	uint8_t x = lcd_read_reg(0);
+	while(x != 0x75) {}
 
 	lcd_pll_init();
 	lcd_write_reg(RA8875_SYSR, RA8875_SYSR_16BPP | RA8875_SYSR_MCU8);
