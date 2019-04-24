@@ -301,6 +301,11 @@ void wait_ticks(int count) {
  * using PLL0 and IRC oscillator
  */
 void clock_setup(void) {
+	// SPI
+	PCLKSEL0 &= ~(1<<16);
+	PCLKSEL0 &= ~(1<<17);
+
+
 	// select P1.27 for clock out and enable
 	// PINSEL3 |= (1<<22);
 	CLKOUTCFG = (1<<8);
@@ -335,6 +340,9 @@ void clock_setup(void) {
 }
 
 void gpio_setup() {
+	FIO0PIN |= (1<<9); // P0.9 is SS for PS2
+	FIO0PIN |= (1<<7); // P0.7 is SS for LCD
+
 	// LED Setup
 	FIO0DIR |= (1<<22);
 	FIO3DIR |= (3<<25);
@@ -353,7 +361,7 @@ void spi_setup() {
 
 void ps2_spi_setup() {
 	// 96 MHz / 8 => 12 MHz SPI clock
-	PCLKSEL0 |= (3<<16);
+	//PCLKSEL0 |= (3<<16);  CANNOT DO THIS
 
 	// 12 MHz / 48 => 250kHz SCK
 	S0SPCCR |= 0x30;
@@ -374,8 +382,8 @@ void ps2_spi_setup() {
 void lcd_spi_setup() {
 	// 96 MHz / 8 => 12 MHz SPI clock (11)
 	// 96 / 2 => 48 MHz (10)
-	PCLKSEL0 &= ~(1<<16);
-	PCLKSEL0 &= ~(1<<17); // was high
+	//PCLKSEL0 &= ~(1<<16); CANNOT CHANGE HERE
+	//PCLKSEL0 &= ~(1<<17); // was high
 
 	// 48 MHz / 12 => 4 MHz SCK
 	// has to be even, >= 8
@@ -587,11 +595,17 @@ uint8_t lcd_read_reg(uint8_t reg) {
 /**************************************************************************/
 void lcd_write_data(uint8_t d)
 {
-	lcd_select();
+//	lcd_select();
+//	spi_begin();
+//	spi_send(RA8875_DATAWRITE);
+//	spi_send(d);
+//	spi_end();
+//	lcd_free();
+
 	spi_begin();
+	lcd_select();
 	spi_send(RA8875_DATAWRITE);
 	spi_send(d);
-	spi_end();
 	lcd_free();
 }
 
@@ -604,11 +618,16 @@ void lcd_write_data(uint8_t d)
 /**************************************************************************/
 uint8_t lcd_read_data(void)
 {
-	lcd_select();
+//	lcd_select();
+//	spi_begin();
+//	spi_send(RA8875_DATAREAD);
+//	uint8_t x = spi_send(0x0);
+//	spi_end();
+//	lcd_free();
 	spi_begin();
+	lcd_select();
 	spi_send(RA8875_DATAREAD);
 	uint8_t x = spi_send(0x0);
-	spi_end();
 	lcd_free();
 	return x;
 }
@@ -622,12 +641,19 @@ uint8_t lcd_read_data(void)
 /**************************************************************************/
 void lcd_write_command(uint8_t d)
 {
-	lcd_select();
+//	lcd_select();
+//	spi_begin();
+//	spi_send(RA8875_CMDWRITE);
+//	spi_send(d);
+//	//while(1) {}
+//	spi_end();
+//	lcd_free();
+
 	spi_begin();
+	lcd_select();
 	spi_send(RA8875_CMDWRITE);
 	spi_send(d);
 	//while(1) {}
-	spi_end();
 	lcd_free();
 }
 
@@ -639,11 +665,18 @@ void lcd_write_command(uint8_t d)
 /**************************************************************************/
 uint8_t lcd_read_status(void)
 {
-	lcd_select();
+//	lcd_select();
+//	spi_begin();
+//	spi_send(RA8875_CMDREAD);
+//	uint8_t x = spi_send(0x0);
+//	spi_end();
+//	lcd_free();
+//	return x;
+
 	spi_begin();
+	lcd_select();
 	spi_send(RA8875_CMDREAD);
 	uint8_t x = spi_send(0x0);
-	spi_end();
 	lcd_free();
 	return x;
 }
@@ -662,7 +695,10 @@ void lcd_init(void) {
 	uint16_t _width = 800;
 
 	uint8_t x = lcd_read_reg(0);
-	while(x != 0x75) {}
+	x = lcd_read_reg(0);
+	while(x != 0x75) {
+		//x = lcd_read_reg(0);
+	}
 
 	lcd_pll_init();
 	lcd_write_reg(RA8875_SYSR, RA8875_SYSR_16BPP | RA8875_SYSR_MCU8);
