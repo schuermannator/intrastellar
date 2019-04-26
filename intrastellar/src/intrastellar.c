@@ -290,10 +290,25 @@ uint8_t lcd_read_status(void);
 #define STCTRL		(*(volatile unsigned int *) 0xE000E010)
 #define STRELOAD	(*(volatile unsigned int *) 0xE000E014)
 
+#define T0TC 		(*(volatile unsigned int *) 0x40004008)
+#define T0TCR 		(*(volatile unsigned int *) 0x40004004)
+
 void wait_ticks(int count) {
     volatile int ticks = count;
     while (ticks > 0)
         ticks--;
+}
+
+void wait_us(int us) {
+	int start;
+	us *= 24;
+	start = T0TC;
+	T0TCR |= (1 << 0);
+	while((T0TC - start) < us){}
+}
+
+void wait_ms(int ms) {
+	wait_us(1000*ms);
 }
 
 /*
@@ -683,10 +698,10 @@ uint8_t lcd_read_status(void)
 
 void lcd_pll_init() {
 	//lcd_write_reg(RA8875_PLLC1, RA8875_PLLC1_PLLDIV1 + 10); -> should be 11
-	lcd_write_reg(RA8875_PLLC1, 0x0b);
-	wait_ticks(100); //delay(1);
+	lcd_write_reg(RA8875_PLLC1, 0x0A);
+	wait_ms(1); //delay(1);
 	lcd_write_reg(RA8875_PLLC2, RA8875_PLLC2_DIV4);
-	wait_ticks(100); //delay(1);
+	wait_ms(1); //delay(1);
 }
 
 // initialize
@@ -695,10 +710,7 @@ void lcd_init(void) {
 	uint16_t _width = 800;
 
 	uint8_t x = lcd_read_reg(0);
-	x = lcd_read_reg(0);
-	while(x != 0x75) {
-		//x = lcd_read_reg(0);
-	}
+	while(x != 0x75) {}
 
 	lcd_pll_init();
 	lcd_write_reg(RA8875_SYSR, RA8875_SYSR_16BPP | RA8875_SYSR_MCU8);
@@ -723,7 +735,7 @@ void lcd_init(void) {
 	vsync_pw        = 2;
 
 	lcd_write_reg(RA8875_PCSR, pixclk);
-	wait_ticks(100); //delay(1)
+	wait_ms(1); //delay(1)
 
 	/* Horizontal settings registers */
 	lcd_write_reg(RA8875_HDWR, (_width / 8) - 1);                          // H width: (HDWR + 1) * 8 = 480
@@ -754,8 +766,8 @@ void lcd_init(void) {
 	lcd_write_reg(RA8875_VEAW1, (uint16_t)(_height - 1) >> 8);
 
 	/* Clear the entire window */
-	lcd_write_reg(RA8875_MCLR, RA8875_MCLR_START | RA8875_MCLR_FULL);
-	wait_ticks(5000); // delay(500)
+	//lcd_write_reg(RA8875_MCLR, RA8875_MCLR_START | RA8875_MCLR_FULL);
+	wait_ms(500); // delay(500)
 }
 
 void lcd_text_mode()
@@ -771,7 +783,7 @@ void lcd_text_mode()
 	temp = lcd_read_data();
 	temp &= ~((1<<7) | (1<<5)); // Clear bits 7 and 5
 	lcd_write_data(temp);
-	wait_ticks(1000);
+	//wait_ticks(1000);
 }
 
 /**************************************************************************/
@@ -808,7 +820,7 @@ void lcd_cursor_blink(uint8_t rate){
 	if (rate > 255) rate = 255;
 	lcd_write_command(RA8875_BTCR);
 	lcd_write_data(rate);
-	wait_ticks(1000);
+	//wait_ticks(1000);
 }
 
 /**************************************************************************/
@@ -823,7 +835,7 @@ void lcd_text_write(const char* buffer, uint16_t len) {
 	lcd_write_command(RA8875_MRWC);
 	for (uint16_t i=0;i<len;i++) {
 		lcd_write_data(buffer[i]);
-		wait_ticks(100);
+		//wait_ms(1);
 	}
 }
 
@@ -1013,15 +1025,14 @@ int main(void) {
 	//eep_write();
 	//int test = eep_read();
 
-	//display();
-
 
 	FIO0PIN &= ~(1<<6);
-	wait_ticks(1000);
+	wait_ms(120);
 	FIO0PIN |= (1<<6);
-	wait_ticks(10000);
+	wait_ms(120);
 
 	lcd_init();
+
 	//displayOn(true);
 	lcd_write_reg(RA8875_PWRR, RA8875_PWRR_NORMAL | RA8875_PWRR_DISPON);
 	//GPIOX(true);      // Enable TFT - display enable tied to GPIOX
@@ -1031,17 +1042,20 @@ int main(void) {
 	//PWM1out(255);
 	lcd_write_reg(RA8875_P1DCR, 255);
 	//lcd_fill_screen(RA8875_BLACK);
+	//wait_ms(100);
 
-	//while(1) {}
+	while (1) {}
+
 	lcd_text_mode();
-	lcd_text_set_cursor(100, 100);
 	lcd_cursor_blink(32);
+	lcd_text_set_cursor(10, 10);
+
 	char test[15] = "Hello, World! ";
 	lcd_text_transparent(RA8875_WHITE);
-	lcd_text_color(RA8875_WHITE, RA8875_RED);
-	lcd_text_write(test, 15);
+	//lcd_text_color(RA8875_WHITE, RA8875_RED);
+	lcd_text_write(test, 14);
 	//lcd_write_command(0x01);
-	//led_write_data(0x80);
+	//lcd_write_data(0x80);
 
 	while (1) {}
     return 0;

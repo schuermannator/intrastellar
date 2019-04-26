@@ -41,17 +41,26 @@ void setup()
     while (1);
   }
 
+  while(1);
+
   tft.displayOn(true);
+  
   tft.GPIOX(true);      // Enable TFT - display enable tied to GPIOX
+  
   tft.PWM1config(true, RA8875_PWM_CLK_DIV1024); // PWM output for backlight
   tft.PWM1out(255);
+
+  //while(1);
+  
   //tft.fillScreen(RA8875_BLACK);
+
+  
 
   /* Switch to text mode */
   tft.textMode();
   tft.cursorBlink(32);
 
-
+  
   /* Set a solid for + bg color ... */
 
   /* ... or a fore color plus a transparent background */
@@ -64,6 +73,10 @@ void setup()
   char string[15] = "Hello, World! ";
   tft.textTransparent(RA8875_WHITE);
   tft.textWrite(string);
+  while(1);
+
+
+  
   tft.textColor(RA8875_WHITE, RA8875_RED);
   tft.textWrite(string);
   tft.textTransparent(RA8875_CYAN);
