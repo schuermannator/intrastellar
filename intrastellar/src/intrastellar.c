@@ -15,6 +15,8 @@
 #include <cr_section_macros.h>
 #include <stdint.h>
 
+int SPI_SPEED = 0xC0;
+
 //#define uint8_t unsigned char
 
 uint8_t lcd_read_data();
@@ -403,7 +405,8 @@ void lcd_spi_setup() {
 	// 48 MHz / 12 => 4 MHz SCK
 	// has to be even, >= 8
 	//S0SPCCR = 0xC;
-	S0SPCCR = 0xc0;
+	////S0SPCCR = 0xc0;
+	S0SPCCR = SPI_SPEED;
 
 	// phase (default)
 	S0SPCR &= ~(1<<3);
@@ -1033,6 +1036,10 @@ int main(void) {
 
 	lcd_init();
 
+	wait_ms(1);
+	SPI_SPEED = 0xC;
+	wait_ms(1);
+
 	//displayOn(true);
 	lcd_write_reg(RA8875_PWRR, RA8875_PWRR_NORMAL | RA8875_PWRR_DISPON);
 	//GPIOX(true);      // Enable TFT - display enable tied to GPIOX
@@ -1044,7 +1051,7 @@ int main(void) {
 	//lcd_fill_screen(RA8875_BLACK);
 	//wait_ms(100);
 
-	while (1) {}
+	//while (1) {}
 
 	lcd_text_mode();
 	lcd_cursor_blink(32);
@@ -1054,8 +1061,6 @@ int main(void) {
 	lcd_text_transparent(RA8875_WHITE);
 	//lcd_text_color(RA8875_WHITE, RA8875_RED);
 	lcd_text_write(test, 14);
-	//lcd_write_command(0x01);
-	//lcd_write_data(0x80);
 
 	while (1) {}
     return 0;
