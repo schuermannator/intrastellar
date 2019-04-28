@@ -14,6 +14,8 @@
 
 #include <cr_section_macros.h>
 #include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
 
 int SPI_SPEED = 0xC0;
 
@@ -381,7 +383,8 @@ void ps2_spi_setup() {
 	//PCLKSEL0 |= (3<<16);  CANNOT DO THIS
 
 	// 12 MHz / 48 => 250kHz SCK
-	S0SPCCR |= 0x30;
+	//S0SPCCR |= 0x30;
+	S0SPCCR = 0x50;
 
 	// phase
 	S0SPCR |= (1<<3);
@@ -394,6 +397,7 @@ void ps2_spi_setup() {
 
 	// LSB first
 	S0SPCR |= (1<<6);
+	wait_us(1);
 }
 
 void lcd_spi_setup() {
@@ -419,7 +423,7 @@ void lcd_spi_setup() {
 
 	// MSB first (default)
 	S0SPCR &= ~(1<<6);
-	wait_ticks(100);
+	wait_us(1);
 }
 
 void interrupt_setup() {
@@ -468,6 +472,8 @@ int read_controller() {
 	int controller = 0;
 	volatile int status;
 	int read;
+
+	ps2_spi_setup();
 
 	// new packet assert SS
 	FIO0PIN &= ~(1<<9);
@@ -574,7 +580,6 @@ uint8_t spi_send(uint8_t data) {
 }
 
 void spi_end() {
-
 }
 
 /**************************************************************************/
@@ -834,7 +839,7 @@ void lcd_cursor_blink(uint8_t rate){
 */
 /**************************************************************************/
 void lcd_text_write(const char* buffer, uint16_t len) {
-	//if (len == 0) len = strlen(buffer);
+	if (len == 0) len = strlen(buffer);
 	lcd_write_command(RA8875_MRWC);
 	for (uint16_t i=0;i<len;i++) {
 		lcd_write_data(buffer[i]);
@@ -896,21 +901,65 @@ void lcd_text_transparent(uint16_t foreColor)
 	lcd_write_data(temp);
 }
 
+bool lcd_wait_poll(uint8_t regname, uint8_t waitflag) {
+	/* Wait for the command to finish */
+	while (1) {
+		uint8_t temp = lcd_read_reg(regname);
+		if (!(temp & waitflag))
+			return true;
+	}
+	return false; // MEMEFIX: yeah i know, unreached! - add timeout?
+}
+
+void lcd_rect_helper(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color, bool filled) {
+	/* Set X */
+	lcd_write_command(0x91);
+	lcd_write_data(x);
+	lcd_write_command(0x92);
+	lcd_write_data(x >> 8);
+
+	/* Set Y */
+	lcd_write_command(0x93);
+	lcd_write_data(y);
+	lcd_write_command(0x94);
+	lcd_write_data(y >> 8);
+
+	/* Set X1 */
+	lcd_write_command(0x95);
+	lcd_write_data(w);
+	lcd_write_command(0x96);
+	lcd_write_data((w) >> 8);
+
+	/* Set Y1 */
+	lcd_write_command(0x97);
+	lcd_write_data(h);
+	lcd_write_command(0x98);
+	lcd_write_data((h) >> 8);
+
+	/* Set Color */
+	lcd_write_command(0x63);
+	lcd_write_data((color & 0xf800) >> 11);
+	lcd_write_command(0x64);
+	lcd_write_data((color & 0x07e0) >> 5);
+	lcd_write_command(0x65);
+	lcd_write_data((color & 0x001f));
+
+	/* Draw! */
+	lcd_write_command(RA8875_DCR);
+	if (filled) {
+		lcd_write_data(0xB0);
+	}
+	else {
+		lcd_write_data(0x90);
+	}
+
+	/* Wait for the command to finish */
+	lcd_wait_poll(RA8875_DCR, RA8875_DCR_LINESQUTRI_STATUS);
+}
+
 void lcd_fill_screen(uint16_t color) {
-	//rectHelper(0, 0, _width-1, _height-1, color, true);
+	lcd_rect_helper(0, 0, 800-1, 480-1, color, true);
 }
-
-int display() {
-	lcd_init();
-	lcd_text_mode();
-	lcd_text_set_cursor(100, 100);
-	lcd_cursor_blink(5);
-	const char* test = "this is a test";
-	lcd_text_write(test, 14);
-
-	return 0;
-}
-
 
 /*
  * Starts I2C communication
@@ -1028,7 +1077,6 @@ int main(void) {
 	//eep_write();
 	//int test = eep_read();
 
-
 	FIO0PIN &= ~(1<<6);
 	wait_ms(120);
 	FIO0PIN |= (1<<6);
@@ -1048,20 +1096,36 @@ int main(void) {
 	lcd_write_reg(RA8875_P1CR, RA8875_P1CR_ENABLE | (RA8875_PWM_CLK_DIV1024 & 0xF));
 	//PWM1out(255);
 	lcd_write_reg(RA8875_P1DCR, 255);
-	//lcd_fill_screen(RA8875_BLACK);
+	lcd_fill_screen(RA8875_BLACK);
 	//wait_ms(100);
 
 	//while (1) {}
 
 	lcd_text_mode();
 	lcd_cursor_blink(32);
-	lcd_text_set_cursor(10, 10);
+	lcd_text_set_cursor(150, 220);
 
-	char test[15] = "Hello, World! ";
+	char test[58] = "Welcome to Intrastellar! Press any button to continue... ";
 	lcd_text_transparent(RA8875_WHITE);
-	//lcd_text_color(RA8875_WHITE, RA8875_RED);
-	lcd_text_write(test, 14);
+	lcd_text_color(RA8875_WHITE, RA8875_RED);
+	lcd_text_write(test, 0);
 
-	while (1) {}
+	while (1) {
+		// first 16 bits: digital
+		// next byte: left stick X
+		// next byte: left stick Y
+		int controller = read_controller();
+		int digital = controller >> 16;
+		int joy_x = (controller & ~(0xff00)) >> 8;
+		int joy_y = (controller & ~(0xff));
+		if (digital & (1 << 7))
+			led(2);
+		else if (digital & (1 << 4))
+			led(1);
+		else if (digital)
+			led(0);
+		else
+			led(-1);
+	}
     return 0;
 }
