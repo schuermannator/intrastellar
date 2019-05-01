@@ -17,6 +17,7 @@
 #include "intrastellar.h"
 #include "lcd.h"
 #include "ps2.h"
+#include "eeprom.h"
 
 #define X 0x4000
 #define RB 0x200
@@ -343,6 +344,7 @@ bool end_screen() {
 		controller = get_controller();
 	}
 	lcd_cursor_blink(0);
+	lcd_text_set_cursor(0, 0);
 	return true;
 }
 
@@ -415,11 +417,13 @@ int main(void) {
 	gpio_setup();
 	spi_setup();
 	interrupt_setup();
-	//eep_setup();
+	eep_setup();
 	led(-1);
 
-	//eep_write();
-	//int test = eep_read();
+	eep_write();
+	int test = eep_read();
+
+	while(1);
 
 	lcd_reset();
 	lcd_init();
