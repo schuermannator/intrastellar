@@ -173,7 +173,10 @@ void lcd_init(void) {
 	while(x != 0x75) {}
 
 	lcd_pll_init();
-	lcd_write_reg(RA8875_SYSR, RA8875_SYSR_16BPP | RA8875_SYSR_MCU8);
+	lcd_write_reg(RA8875_SYSR, RA8875_SYSR_8BPP | RA8875_SYSR_MCU8);
+
+    // 2 layer mode
+	lcd_write_reg(RA8875_DPCR, 0x80);
 
 	/* Timing values */
 	uint8_t pixclk;

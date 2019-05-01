@@ -262,4 +262,8 @@ uint8_t lcd_read_data();
 #define RA8875_SCROLL_LAYER2    0x80
 #define RA8875_SCROLL_BUFFER    0xC0
 
+#define RA8875_LTPR0 			0x52
+#define RA8875_DPCR				0x20
+#define RA8875_MWCR1			0x41
+
 #endif /* LCD_H_ */

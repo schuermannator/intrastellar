@@ -22,6 +22,8 @@
 #define RB 0x200
 #define LB 0x100
 
+const int ROCK_RAD = 30;
+
 int SPI_SPEED = 0xC0;
 
 typedef struct point {
@@ -30,13 +32,16 @@ typedef struct point {
 } Point;
 
 struct Game {
+	bool play;
 	int ship;
+	int lives;
 	int num_rocks;
 	int num_bullets;
 	//Point rocks[50];
 	//Point bullets[50];
 	Point* rocks;
 	Point* bullets;
+	int points;
 } game;
 
 void wait_ticks(int count) {
@@ -148,7 +153,7 @@ void spi_setup() {
 }
 
 void interrupt_setup() {
-	STRELOAD = 1000000;
+	STRELOAD = 2000000;
 	STCTRL = 0b111;
 }
 
@@ -211,7 +216,8 @@ void controller_test() {
 }
 
 void SysTick_Handler(void) {
-	/*
+	/*//// Used to poll controller inside interrupt,
+	 * now just handling in the game loop
 	// first 16 bits: digital
 	// next byte: left stick X
 	// next byte: left stick Y
@@ -231,9 +237,11 @@ void SysTick_Handler(void) {
 
 	// increment all bullets
 	// increment all rocks
-	// move ship if necessary
+	// move ship if necessary --> moved to game loop
 	for(int i = 0; i < game.num_bullets; i++)
-		game.bullets[i].y--;
+		game.bullets[i].y -= 2;
+	for(int i = 0; i < game.num_rocks; i++)
+		game.rocks[i].y++;
 }
 
 int poll() {
@@ -307,37 +315,96 @@ void start_screen() {
 	lcd_cursor_blink(0);
 }
 
+void clear_screen() {
+	lcd_fill_screen(RA8875_BLACK);
+}
+
+bool end_screen() {
+	lcd_write_reg(RA8875_MWCR1, 0);
+	lcd_write_reg(RA8875_LTPR0, 0);
+	clear_screen();
+
+	lcd_text_mode();
+	lcd_cursor_blink(32);
+	lcd_text_set_cursor(250, 220);
+
+	int size_ = 20;
+	char str[size_];
+	itoa(game.points, str, size_);
+	char test[36] = "You lose! Press X to play again... ";
+	lcd_text_transparent(RA8875_WHITE);
+	lcd_text_color(RA8875_WHITE, RA8875_RED);
+	lcd_text_write(test, 0);
+	lcd_text_set_cursor(250, 240);
+	lcd_text_write(str, 0);
+
+	int controller = 0;
+	while (controller != X) {
+		controller = get_controller();
+	}
+	lcd_cursor_blink(0);
+	return true;
+}
+
 void draw_ship(uint16_t x) {
 	uint16_t y = 450;
 	lcd_fill_triangle(x+25-7, y, x+25+7, y, x+25, y-10, RA8875_WHITE);
 	lcd_fill_rect(x, y, 50, 18, RA8875_WHITE);
 }
 
-void clear_screen() {
-	lcd_fill_screen(RA8875_BLACK);
-}
-
 void game_run() {
+	static int timeout = 0;
 	// check controller
 	// check collisions
 	int controller = get_controller();
 	for(int i = 0; i < game.num_bullets; i++) {
 		Point bullet = game.bullets[i];
-		if(bullet.y < 15)
+		if(bullet.y < 15) {
 			game.num_bullets--;
+			for (int k = i; k < game.num_bullets; k++)
+				game.bullets[i] = game.bullets[i+1];
+		}
 	}
-	if (controller == X) {
-		game.num_bullets++;
-		game.bullets[game.num_bullets-1].x = game.ship + 25;
-		game.bullets[game.num_bullets-1].y = 450;
+	if (timeout > 0)
+		timeout--;
+	if (controller & X) {
+		if(timeout <= 0) {
+			game.num_bullets++;
+			game.bullets[game.num_bullets-1].x = game.ship + 25;
+			game.bullets[game.num_bullets-1].y = 450;
+			timeout = 10;
+		}
 	}
-	else if (controller == RB) {
+	if (controller & RB) {
 		if(game.ship < 750)
 			game.ship += 10;
 	}
-	else if (controller == LB) {
+	if (controller & LB) {
 		if(game.ship > 10)
 			game.ship -= 10;
+	}
+
+	// check for lives lost and rock collisions
+	for(int i = 0; i < game.num_rocks; i++) {
+		Point rock = game.rocks[i];
+		if (rock.y > 430) {
+			game.lives--;
+			game.num_rocks--;
+			for (int k = i; k < game.num_rocks; k++)
+				game.rocks[i] = game.rocks[i+1];
+		}
+		for(int j = 0; j < game.num_bullets; j++) {
+			Point bullet = game.bullets[i];
+			if (bullet.x <= rock.x + ROCK_RAD && bullet.x >= rock.x - ROCK_RAD) {
+				if (bullet.y <= rock.y + ROCK_RAD) {
+					// bullet hit
+					game.points += 100;
+					game.num_rocks--;
+					for (int k = i; k < game.num_rocks; k++)
+						game.rocks[i] = game.rocks[i+1];
+				}
+			}
+		}
 	}
 }
 
@@ -368,19 +435,39 @@ int main(void) {
 	game.num_rocks = 1;
 	game.rocks[game.num_rocks-1].x = 400;
 	game.rocks[game.num_rocks-1].y = 120;
+	game.lives = 3;
+	game.play = true;
+	game.points = 0;
 
-	while(1) {
-		clear_screen();
-		draw_ship(game.ship);
-		for(int i = 0; i < game.num_bullets; i++)
-			lcd_draw_bullet(game.bullets[i].x, game.bullets[i].y);
-		for(int i = 0; i < game.num_rocks; i++)
-			lcd_fill_circle(game.rocks[i].x, game.rocks[i].y,  30,  RA8875_WHITE);
-		game_run();
-		wait_ms(200);
+	int layer = 1;
+	int r;
+	while(game.play) {
+		while(game.lives > 0) {
+			// game loop
+			// generate rocks
+			r = rand() % 750 + 25 ; // [25, 775]
+			if (r % 11 == 0 && layer == 0) {
+				game.num_rocks++;
+				game.rocks[game.num_rocks-1].x = r;
+				game.rocks[game.num_rocks-1].y = 20;
+			}
+			// show layer
+			lcd_write_reg(RA8875_LTPR0, layer);
+
+			// switch and write
+			layer ^= 1;
+			lcd_write_reg(RA8875_MWCR1, layer);
+			clear_screen();
+			draw_ship(game.ship);
+			for(int i = 0; i < game.num_bullets; i++)
+				lcd_draw_bullet(game.bullets[i].x, game.bullets[i].y);
+			for(int i = 0; i < game.num_rocks; i++)
+				lcd_fill_circle(game.rocks[i].x, game.rocks[i].y,  ROCK_RAD,  RA8875_WHITE);
+			game_run();
+		}
+		game.play = end_screen();
+		game.lives = 3;
 	}
-
-
 
     return 0;
 }
