@@ -67,14 +67,14 @@ void eep_setup() {
 
 }
 
-void eep_write() {
+void eep_write(uint8_t data) {
 	// I2C test
 	i2c_start();
 	i2c_write(0b10100000); // first 7 bits are address, last is R/!W -- in our case write
 	// check ACK with I2C stat reg
 	i2c_write(0); // address high ___-----
 	i2c_write(0); // address low (full byte)
-	i2c_write(0b10101010); // data
+	i2c_write(data); // data
 	i2c_stop();
 }
 

@@ -38,11 +38,12 @@ struct Game {
 	int lives;
 	int num_rocks;
 	int num_bullets;
-	//Point rocks[50];
-	//Point bullets[50];
-	Point* rocks;
-	Point* bullets;
+	Point rocks[50];
+	Point bullets[50];
+	//Point* rocks;
+	//Point* bullets;
 	int points;
+	uint8_t high_score;
 } game;
 
 void wait_ticks(int count) {
@@ -205,7 +206,7 @@ void controller_test() {
 		//int size_ = (int)((ceil(log10(num))+1)*sizeof(char))
 		int size_ = 20;
 		char str[size_];
-		itoa(dpoll(), str, size_);
+		itoa(dpoll(), str, 10);
 		wait_ms(5);
 		lcd_text_transparent(RA8875_WHITE);
 		lcd_text_set_cursor(150, 220);
@@ -307,6 +308,15 @@ void start_screen() {
 	lcd_text_color(RA8875_WHITE, RA8875_RED);
 	lcd_text_write(test, 0);
 
+	lcd_text_set_cursor(150, 240);
+	char next[13] = "High Score: ";
+	lcd_text_write(next, 0);
+
+	lcd_text_set_cursor(250, 240);
+	char score[15];
+	itoa(game.high_score*100, score, 10);
+	lcd_text_write(score, 0);
+
 	int controller = 0;
 	while (controller != X) {
 		controller = get_controller();
@@ -331,12 +341,17 @@ bool end_screen() {
 
 	int size_ = 20;
 	char str[size_];
-	itoa(game.points, str, size_);
+	itoa(game.points, str, 10);
 	char test[36] = "You lose! Press X to play again... ";
 	lcd_text_transparent(RA8875_WHITE);
 	lcd_text_color(RA8875_WHITE, RA8875_RED);
 	lcd_text_write(test, 0);
+
 	lcd_text_set_cursor(250, 240);
+	char next[13] = "Your Score: ";
+	lcd_text_write(next, 0);
+
+	lcd_text_set_cursor(360, 240);
 	lcd_text_write(str, 0);
 
 	int controller = 0;
@@ -372,8 +387,10 @@ void game_run() {
 	if (controller & X) {
 		if(timeout <= 0) {
 			game.num_bullets++;
-			game.bullets[game.num_bullets-1].x = game.ship + 25;
-			game.bullets[game.num_bullets-1].y = 450;
+			//game.bullets[game.num_bullets-1].x = game.ship + 25;
+			//game.bullets[game.num_bullets-1].y = 450;
+			Point pt = {game.ship + 25, 450};
+			game.bullets[game.num_bullets-1] = pt;
 			timeout = 10;
 		}
 	}
@@ -393,17 +410,23 @@ void game_run() {
 			game.lives--;
 			game.num_rocks--;
 			for (int k = i; k < game.num_rocks; k++)
-				game.rocks[i] = game.rocks[i+1];
+				game.rocks[k] = game.rocks[k+1];
 		}
 		for(int j = 0; j < game.num_bullets; j++) {
-			Point bullet = game.bullets[i];
+			Point bullet = game.bullets[j];
 			if (bullet.x <= rock.x + ROCK_RAD && bullet.x >= rock.x - ROCK_RAD) {
 				if (bullet.y <= rock.y + ROCK_RAD) {
 					// bullet hit
 					game.points += 100;
 					game.num_rocks--;
 					for (int k = i; k < game.num_rocks; k++)
-						game.rocks[i] = game.rocks[i+1];
+						game.rocks[k] = game.rocks[k+1];
+
+					game.num_bullets--;
+					for (int k = j; k < game.num_bullets; k++)
+						game.bullets[k] = game.bullets[k+1];
+					i--;
+					j--;
 				}
 			}
 		}
@@ -420,40 +443,46 @@ int main(void) {
 	eep_setup();
 	led(-1);
 
-	eep_write();
-	int test = eep_read();
-
-	while(1);
+    //eep_write(5);
+    //wait_ms(100);
 
 	lcd_reset();
 	lcd_init();
-	start_screen(); // blocks until button press
-	lcd_graphics_mode();
 
-	game.ship = 350;
-	game.bullets = (Point*)malloc(50 * sizeof(Point));
-	game.rocks = (Point*)malloc(50 * sizeof(Point));;
-	game.num_bullets = 1;
-	game.bullets[game.num_bullets-1].x = 375;
-	game.bullets[game.num_bullets-1].y = 310;
-	game.num_rocks = 1;
-	game.rocks[game.num_rocks-1].x = 400;
-	game.rocks[game.num_rocks-1].y = 120;
-	game.lives = 3;
+	//game.bullets = (Point*)malloc(50 * sizeof(Point));
+	//game.rocks = (Point*)malloc(50 * sizeof(Point));
+	//game.bullets[0] = Point{};
+	//game.rocks[0] =
+	//game.num_bullets = 1;
+	//game.bullets[game.num_bullets-1].x = 375;
+	//game.bullets[game.num_bullets-1].y = 310;
+	//game.num_rocks = 1;
+	//game.rocks[game.num_rocks-1].x = 400;
+	//game.rocks[game.num_rocks-1].y = 120;
 	game.play = true;
-	game.points = 0;
 
 	int layer = 1;
-	int r;
+	int r, r1;
 	while(game.play) {
+		game.num_bullets = 0;
+		game.num_rocks = 0;
+		game.ship = 350;
+		game.high_score = eep_read();
+		start_screen(); // blocks until button press
+		lcd_graphics_mode();
+		game.lives = 3;
+		game.points = 0;
 		while(game.lives > 0) {
 			// game loop
 			// generate rocks
 			r = rand() % 750 + 25 ; // [25, 775]
-			if (r % 11 == 0 && layer == 0) {
+			r1 = rand() % 9 + 1; // [1 10]
+			if (r % 11 == 0 && layer == 0 && r1 > 7) {
 				game.num_rocks++;
 				game.rocks[game.num_rocks-1].x = r;
 				game.rocks[game.num_rocks-1].y = 20;
+				//Point pt = {r, 20};
+				//game.rocks[game.num_rocks-1] = pt;
 			}
 			// show layer
 			lcd_write_reg(RA8875_LTPR0, layer);
@@ -469,8 +498,11 @@ int main(void) {
 				lcd_fill_circle(game.rocks[i].x, game.rocks[i].y,  ROCK_RAD,  RA8875_WHITE);
 			game_run();
 		}
+		if (game.points > (game.high_score * 100)) {
+			eep_write(game.points / 100);
+		}
 		game.play = end_screen();
-		game.lives = 3;
+		wait_ms(2000);
 	}
 
     return 0;

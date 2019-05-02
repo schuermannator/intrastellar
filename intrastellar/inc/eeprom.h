@@ -15,7 +15,7 @@ void i2c_write(int data);
 int i2c_read();
 void i2c_stop();
 void eep_setup();
-void eep_write();
+void eep_write(uint8_t data);
 int eep_read();
 
 #endif /* EEPROM_H_ */
