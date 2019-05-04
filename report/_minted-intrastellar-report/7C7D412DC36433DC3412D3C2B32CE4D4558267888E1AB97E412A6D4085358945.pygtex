@@ -1,0 +1,68 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/*}
+\PYG{c+cm}{ * intrastellar.h}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *  Created on: Apr 28, 2019}
+\PYG{c+cm}{ *      Author: Zach}
+\PYG{c+cm}{ */}
+
+\PYG{c+cp}{\PYGZsh{}ifndef INTRASTELLAR\PYGZus{}H\PYGZus{}}
+\PYG{c+cp}{\PYGZsh{}define INTRASTELLAR\PYGZus{}H\PYGZus{}}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}stdint.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}stdbool.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}string.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}stdlib.h\PYGZgt{}}
+
+\PYG{c+c1}{// GPIO}
+\PYG{c+cp}{\PYGZsh{}define FIO0DIR (*(volatile unsigned int *) 0x2009c000)}
+\PYG{c+cp}{\PYGZsh{}define FIO0PIN (*(volatile unsigned int *) 0x2009c014)}
+\PYG{c+cp}{\PYGZsh{}define FIO3DIR (*(volatile unsigned int *) 0x2009c060)}
+\PYG{c+cp}{\PYGZsh{}define FIO3PIN (*(volatile unsigned int *) 0x2009c074)}
+\PYG{c+cp}{\PYGZsh{}define PINSEL0 (*(volatile unsigned int *) 0x4002C000)}
+\PYG{c+cp}{\PYGZsh{}define PINSEL1 (*(volatile unsigned int *) 0x4002C004)}
+
+\PYG{c+c1}{// clock}
+\PYG{c+cp}{\PYGZsh{}define CLKOUTCFG   (*(volatile unsigned int *) 0x400fc1c8)}
+\PYG{c+cp}{\PYGZsh{}define PLL0CON     (*(volatile unsigned int *) 0x400FC080)}
+\PYG{c+cp}{\PYGZsh{}define PLL0CFG     (*(volatile unsigned int *) 0x400FC084)}
+\PYG{c+cp}{\PYGZsh{}define PLL0FEED    (*(volatile unsigned int *) 0x400FC08C)}
+\PYG{c+cp}{\PYGZsh{}define PLL0STAT    (*(volatile unsigned int *) 0x400FC088)}
+\PYG{c+cp}{\PYGZsh{}define CCLKCFG     (*(volatile unsigned int *) 0x400FC104)}
+\PYG{c+cp}{\PYGZsh{}define PCLKSEL0 	(*(volatile unsigned int *) 0x400FC1A8)}
+
+\PYG{c+c1}{// SPI}
+\PYG{c+cp}{\PYGZsh{}define S0SPCCR		(*(volatile unsigned int *) 0x4002000C)}
+\PYG{c+cp}{\PYGZsh{}define S0SPCR 		(*(volatile unsigned int *) 0x40020000)}
+\PYG{c+cp}{\PYGZsh{}define S0SPSR 		(*(volatile unsigned int *) 0x40020004)}
+\PYG{c+cp}{\PYGZsh{}define S0SPDR		(*(volatile unsigned int *) 0x40020008)}
+
+\PYG{c+c1}{// I2C}
+\PYG{c+cp}{\PYGZsh{}define I2C1CONSET 	(*(volatile unsigned int *) 0x4005C000)}
+\PYG{c+cp}{\PYGZsh{}define I2C1CONCLR 	(*(volatile unsigned int *) 0x4005C018)}
+\PYG{c+cp}{\PYGZsh{}define I2C1DAT 	(*(volatile unsigned int *) 0x4005C008)}
+\PYG{c+cp}{\PYGZsh{}define I2C1STAT 	(*(volatile unsigned int *) 0x4005C004)}
+\PYG{c+cp}{\PYGZsh{}define I2C1SCLH 	(*(volatile unsigned int *) 0x4005C010)}
+\PYG{c+cp}{\PYGZsh{}define I2C1SCLL 	(*(volatile unsigned int *) 0x4005C014)}
+
+\PYG{c+c1}{// Systick}
+\PYG{c+cp}{\PYGZsh{}define STCTRL		(*(volatile unsigned int *) 0xE000E010)}
+\PYG{c+cp}{\PYGZsh{}define STRELOAD	(*(volatile unsigned int *) 0xE000E014)}
+
+\PYG{c+cp}{\PYGZsh{}define T0TC 		(*(volatile unsigned int *) 0x40004008)}
+\PYG{c+cp}{\PYGZsh{}define T0TCR 		(*(volatile unsigned int *) 0x40004004)}
+
+\PYG{k+kt}{void} \PYG{n+nf}{wait\PYGZus{}ticks}\PYG{p}{(}\PYG{k+kt}{int}\PYG{p}{);}
+\PYG{k+kt}{void} \PYG{n+nf}{wait\PYGZus{}ms}\PYG{p}{(}\PYG{k+kt}{int}\PYG{p}{);}
+\PYG{k+kt}{void} \PYG{n+nf}{wait\PYGZus{}us}\PYG{p}{(}\PYG{k+kt}{int}\PYG{p}{);}
+
+\PYG{k+kt}{void} \PYG{n+nf}{clock\PYGZus{}test}\PYG{p}{();}
+
+\PYG{k+kt}{int} \PYG{n+nf}{poll}\PYG{p}{();}
+\PYG{k+kt}{int} \PYG{n+nf}{dpoll}\PYG{p}{();}
+\PYG{k+kt}{int} \PYG{n+nf}{get\PYGZus{}controller}\PYG{p}{();}
+\PYG{k+kt}{void} \PYG{n+nf}{controller\PYGZus{}test}\PYG{p}{();}
+
+
+\PYG{c+cp}{\PYGZsh{}endif }\PYG{c+cm}{/* INTRASTELLAR\PYGZus{}H\PYGZus{} */}
+\end{Verbatim}

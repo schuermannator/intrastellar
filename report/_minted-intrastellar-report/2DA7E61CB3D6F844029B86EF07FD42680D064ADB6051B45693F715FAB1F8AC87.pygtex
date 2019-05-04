@@ -1,0 +1,512 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/*}
+\PYG{c+cm}{===============================================================================}
+\PYG{c+cm}{ Name        : intrastellar.c}
+\PYG{c+cm}{ Author      : Zach Schuermann}
+\PYG{c+cm}{ Version     :}
+\PYG{c+cm}{ Copyright   : Zach Schuermann, 2019}
+\PYG{c+cm}{ Description : Intrastellar Retro Game}
+\PYG{c+cm}{===============================================================================}
+\PYG{c+cm}{*/}
+
+\PYG{c+cp}{\PYGZsh{}ifdef \PYGZus{}\PYGZus{}USE\PYGZus{}CMSIS}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}LPC17xx.h\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}endif}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}cr\PYGZus{}section\PYGZus{}macros.h\PYGZgt{}}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}intrastellar.h\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}lcd.h\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}ps2.h\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}eeprom.h\PYGZdq{}}
+
+\PYG{c+cp}{\PYGZsh{}define X 0x4000}
+\PYG{c+cp}{\PYGZsh{}define RB 0x200}
+\PYG{c+cp}{\PYGZsh{}define LB 0x100}
+
+\PYG{k}{const} \PYG{k+kt}{int} \PYG{n}{ROCK\PYGZus{}RAD} \PYG{o}{=} \PYG{l+m+mi}{30}\PYG{p}{;}
+
+\PYG{k+kt}{int} \PYG{n}{SPI\PYGZus{}SPEED} \PYG{o}{=} \PYG{l+m+mh}{0xC0}\PYG{p}{;}
+
+\PYG{k}{typedef} \PYG{k}{struct} \PYG{n}{point} \PYG{p}{\PYGZob{}}
+	\PYG{k+kt}{int} \PYG{n}{x}\PYG{p}{;}
+	\PYG{k+kt}{int} \PYG{n}{y}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}} \PYG{n}{Point}\PYG{p}{;}
+
+\PYG{k}{struct} \PYG{n}{Game} \PYG{p}{\PYGZob{}}
+	\PYG{k+kt}{bool} \PYG{n}{play}\PYG{p}{;}
+	\PYG{k+kt}{int} \PYG{n}{ship}\PYG{p}{;}
+	\PYG{k+kt}{int} \PYG{n}{lives}\PYG{p}{;}
+	\PYG{k+kt}{int} \PYG{n}{num\PYGZus{}rocks}\PYG{p}{;}
+	\PYG{k+kt}{int} \PYG{n}{num\PYGZus{}bullets}\PYG{p}{;}
+	\PYG{n}{Point} \PYG{n}{rocks}\PYG{p}{[}\PYG{l+m+mi}{50}\PYG{p}{];}
+	\PYG{n}{Point} \PYG{n}{bullets}\PYG{p}{[}\PYG{l+m+mi}{50}\PYG{p}{];}
+	\PYG{c+c1}{//Point* rocks;}
+	\PYG{c+c1}{//Point* bullets;}
+	\PYG{k+kt}{int} \PYG{n}{points}\PYG{p}{;}
+	\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{high\PYGZus{}score}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}} \PYG{n}{game}\PYG{p}{;}
+
+\PYG{k+kt}{void} \PYG{n+nf}{wait\PYGZus{}ticks}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{count}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{volatile} \PYG{k+kt}{int} \PYG{n}{ticks} \PYG{o}{=} \PYG{n}{count}\PYG{p}{;}
+    \PYG{k}{while} \PYG{p}{(}\PYG{n}{ticks} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)}
+        \PYG{n}{ticks}\PYG{o}{\PYGZhy{}\PYGZhy{}}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{wait\PYGZus{}us}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{us}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+	\PYG{k+kt}{int} \PYG{n}{start}\PYG{p}{;}
+	\PYG{n}{us} \PYG{o}{*=} \PYG{l+m+mi}{24}\PYG{p}{;}
+	\PYG{n}{start} \PYG{o}{=} \PYG{n}{T0TC}\PYG{p}{;}
+	\PYG{n}{T0TCR} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{1} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{);}
+	\PYG{k}{while}\PYG{p}{((}\PYG{n}{T0TC} \PYG{o}{\PYGZhy{}} \PYG{n}{start}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{n}{us}\PYG{p}{)\PYGZob{}\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{wait\PYGZus{}ms}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{ms}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+	\PYG{n}{wait\PYGZus{}us}\PYG{p}{(}\PYG{l+m+mi}{1000}\PYG{o}{*}\PYG{n}{ms}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+c1}{/////// Needs to get moved and fix global variable}
+\PYG{k+kt}{void} \PYG{n+nf}{lcd\PYGZus{}spi\PYGZus{}setup}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+	\PYG{c+c1}{// 96 MHz / 8 =\PYGZgt{} 12 MHz SPI clock (11)}
+	\PYG{c+c1}{// 96 / 2 =\PYGZgt{} 48 MHz (10)}
+	\PYG{c+c1}{//PCLKSEL0 \PYGZam{}= \PYGZti{}(1\PYGZlt{}\PYGZlt{}16); CANNOT CHANGE HERE}
+	\PYG{c+c1}{//PCLKSEL0 \PYGZam{}= \PYGZti{}(1\PYGZlt{}\PYGZlt{}17); // was high}
+
+	\PYG{c+c1}{// 48 MHz / 12 =\PYGZgt{} 4 MHz SCK}
+	\PYG{c+c1}{// has to be even, \PYGZgt{}= 8}
+	\PYG{c+c1}{//S0SPCCR = 0xC;}
+	\PYG{c+c1}{////S0SPCCR = 0xc0;}
+	\PYG{n}{S0SPCCR} \PYG{o}{=} \PYG{n}{SPI\PYGZus{}SPEED}\PYG{p}{;}
+
+	\PYG{c+c1}{// phase (default)}
+	\PYG{n}{S0SPCR} \PYG{o}{\PYGZam{}=} \PYG{o}{\PYGZti{}}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{3}\PYG{p}{);}
+
+	\PYG{c+c1}{// active high clock}
+	\PYG{n}{S0SPCR} \PYG{o}{\PYGZam{}=} \PYG{o}{\PYGZti{}}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{4}\PYG{p}{);}
+
+	\PYG{c+c1}{// operate in master mode}
+	\PYG{n}{S0SPCR} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{5}\PYG{p}{);}
+
+	\PYG{c+c1}{// MSB first (default)}
+	\PYG{n}{S0SPCR} \PYG{o}{\PYGZam{}=} \PYG{o}{\PYGZti{}}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{6}\PYG{p}{);}
+	\PYG{n}{wait\PYGZus{}us}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}\PYG{c+c1}{/////////}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{ * setup CPU clock for 96 MHz instead of default 4MHz}
+\PYG{c+cm}{ * using PLL0 and IRC oscillator}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{void} \PYG{n+nf}{clock\PYGZus{}setup}\PYG{p}{(}\PYG{k+kt}{void}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+	\PYG{c+c1}{// SPI}
+	\PYG{n}{PCLKSEL0} \PYG{o}{\PYGZam{}=} \PYG{o}{\PYGZti{}}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{16}\PYG{p}{);}
+	\PYG{n}{PCLKSEL0} \PYG{o}{\PYGZam{}=} \PYG{o}{\PYGZti{}}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{17}\PYG{p}{);}
+
+
+	\PYG{c+c1}{// select P1.27 for clock out and enable}
+	\PYG{c+c1}{// PINSEL3 |= (1\PYGZlt{}\PYGZlt{}22);}
+	\PYG{n}{CLKOUTCFG} \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{8}\PYG{p}{);}
+
+	\PYG{c+c1}{// bit 0 enable, bit 1 connect}
+	\PYG{n}{PLL0CON} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+	\PYG{c+c1}{// PLL0 setup}
+	\PYG{c+c1}{// feed sequence \PYGZhy{} disconnect}
+	\PYG{n}{PLL0FEED} \PYG{o}{=} \PYG{l+m+mh}{0xAA}\PYG{p}{;}
+	\PYG{n}{PLL0FEED} \PYG{o}{=} \PYG{l+m+mh}{0x55}\PYG{p}{;}
+
+	\PYG{c+c1}{// Generate 288MHz with 36x multiplier}
+	\PYG{n}{PLL0CFG} \PYG{o}{=} \PYG{l+m+mh}{0x23}\PYG{p}{;}
+	\PYG{n}{PLL0FEED} \PYG{o}{=} \PYG{l+m+mh}{0xAA}\PYG{p}{;}
+	\PYG{n}{PLL0FEED} \PYG{o}{=} \PYG{l+m+mh}{0x55}\PYG{p}{;}
+
+	\PYG{c+c1}{//enable}
+	\PYG{n}{PLL0CON} \PYG{o}{=} \PYG{l+m+mh}{0x1}\PYG{p}{;}
+	\PYG{n}{PLL0FEED} \PYG{o}{=} \PYG{l+m+mh}{0xAA}\PYG{p}{;}
+	\PYG{n}{PLL0FEED} \PYG{o}{=} \PYG{l+m+mh}{0x55}\PYG{p}{;}
+
+	\PYG{c+c1}{// Divide by 3 to get 96MHz}
+	\PYG{n}{CCLKCFG} \PYG{o}{=} \PYG{l+m+mh}{0x2}\PYG{p}{;}
+
+	\PYG{c+c1}{// wait for lock}
+    \PYG{k}{while}\PYG{p}{(}\PYG{o}{!}\PYG{p}{((}\PYG{n}{PLL0STAT} \PYG{o}{\PYGZam{}} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{26}\PYG{p}{))} \PYG{o}{\PYGZgt{}\PYGZgt{}} \PYG{l+m+mi}{26}\PYG{p}{))} \PYG{p}{\PYGZob{}\PYGZcb{}}
+
+    \PYG{c+c1}{// connect}
+    \PYG{n}{PLL0CON} \PYG{o}{=} \PYG{l+m+mh}{0x3}\PYG{p}{;}
+    \PYG{n}{PLL0FEED} \PYG{o}{=} \PYG{l+m+mh}{0xAA}\PYG{p}{;}
+    \PYG{n}{PLL0FEED} \PYG{o}{=} \PYG{l+m+mh}{0x55}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{gpio\PYGZus{}setup}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+	\PYG{n}{FIO0PIN} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{9}\PYG{p}{);} \PYG{c+c1}{// P0.9 is SS for PS2}
+	\PYG{n}{FIO0PIN} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{7}\PYG{p}{);} \PYG{c+c1}{// P0.7 is SS for LCD}
+
+	\PYG{c+c1}{// LED Setup}
+	\PYG{n}{FIO0DIR} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{22}\PYG{p}{);}
+	\PYG{n}{FIO3DIR} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{3}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{25}\PYG{p}{);}
+
+	\PYG{c+c1}{// SPI SS}
+	\PYG{n}{FIO0DIR} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{9}\PYG{p}{);} \PYG{c+c1}{// P0.9 is SS for PS2}
+	\PYG{n}{FIO0DIR} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{7}\PYG{p}{);} \PYG{c+c1}{// P0.7 is SS for LCD}
+	\PYG{n}{FIO0DIR} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{6}\PYG{p}{);} \PYG{c+c1}{// P0.6 is RST for LCD}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{spi\PYGZus{}setup}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+	\PYG{n}{PINSEL0} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{3} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{30}\PYG{p}{);} \PYG{c+c1}{// SCK}
+	\PYG{n}{PINSEL1} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{3} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{2}\PYG{p}{);} \PYG{c+c1}{// MISO}
+	\PYG{n}{PINSEL1} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{3} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{4}\PYG{p}{);} \PYG{c+c1}{// MOSI}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{interrupt\PYGZus{}setup}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+	\PYG{n}{STRELOAD} \PYG{o}{=} \PYG{l+m+mi}{2000000}\PYG{p}{;}
+	\PYG{n}{STCTRL} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{n}{b111}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{led}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{num}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+	\PYG{k}{if}\PYG{p}{(}\PYG{n}{num} \PYG{o}{==} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+		\PYG{n}{FIO3PIN} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{25}\PYG{p}{);}
+		\PYG{n}{FIO3PIN} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{26}\PYG{p}{);}
+		\PYG{n}{FIO0PIN} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{22}\PYG{p}{);}
+	\PYG{p}{\PYGZcb{}}
+	\PYG{k}{else} \PYG{k}{if}\PYG{p}{(}\PYG{n}{num} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+		\PYG{n}{FIO3PIN} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{25}\PYG{p}{);}
+		\PYG{n}{FIO3PIN} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{26}\PYG{p}{);}
+		\PYG{n}{FIO0PIN} \PYG{o}{\PYGZam{}=} \PYG{o}{\PYGZti{}}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{22}\PYG{p}{);} \PYG{c+c1}{// turn on red}
+	\PYG{p}{\PYGZcb{}}
+	\PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{n}{num} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+		\PYG{n}{FIO0PIN} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{22}\PYG{p}{);} \PYG{c+c1}{// turn off LED}
+		\PYG{n}{FIO3PIN} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{26}\PYG{p}{);}
+		\PYG{n}{FIO3PIN} \PYG{o}{\PYGZam{}=} \PYG{o}{\PYGZti{}}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{25}\PYG{p}{);} \PYG{c+c1}{// turn on green}
+	\PYG{p}{\PYGZcb{}}
+	\PYG{k}{else} \PYG{p}{\PYGZob{}}
+		\PYG{n}{FIO0PIN} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{22}\PYG{p}{);} \PYG{c+c1}{// turn off LED}
+		\PYG{n}{FIO3PIN} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{25}\PYG{p}{);}
+		\PYG{n}{FIO3PIN} \PYG{o}{\PYGZam{}=} \PYG{o}{\PYGZti{}}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{26}\PYG{p}{);} \PYG{c+c1}{// turn on blue}
+	\PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{ * clock test \PYGZhy{} run for 5 seconds \PYGZhy{} default 4MHz counts to \PYGZti{}2MM,}
+\PYG{c+cm}{ * 96 MHz counts to \PYGZti{}49MM}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{void} \PYG{n+nf}{clock\PYGZus{}test}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+	\PYG{c+c1}{// Force the counter to be placed into memory}
+	\PYG{k}{volatile} \PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+	\PYG{c+c1}{// Enter an infinite loop, just incrementing a counter}
+	\PYG{k}{while}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+		\PYG{n}{i}\PYG{o}{++} \PYG{p}{;}
+	\PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{controller\PYGZus{}test}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+	\PYG{k}{while}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+		\PYG{c+c1}{//// PS1}
+		\PYG{c+c1}{// x is 20}
+		\PYG{c+c1}{// bot trigger L c}
+		\PYG{c+c1}{// bot trigger R 15c}
+
+		\PYG{c+c1}{//int size\PYGZus{} = (int)((ceil(log10(num))+1)*sizeof(char))}
+		\PYG{k+kt}{int} \PYG{n}{size\PYGZus{}} \PYG{o}{=} \PYG{l+m+mi}{20}\PYG{p}{;}
+		\PYG{k+kt}{char} \PYG{n}{str}\PYG{p}{[}\PYG{n}{size\PYGZus{}}\PYG{p}{];}
+		\PYG{n}{itoa}\PYG{p}{(}\PYG{n}{dpoll}\PYG{p}{(),} \PYG{n}{str}\PYG{p}{,} \PYG{l+m+mi}{10}\PYG{p}{);}
+		\PYG{n}{wait\PYGZus{}ms}\PYG{p}{(}\PYG{l+m+mi}{5}\PYG{p}{);}
+		\PYG{n}{lcd\PYGZus{}text\PYGZus{}transparent}\PYG{p}{(}\PYG{n}{RA8875\PYGZus{}WHITE}\PYG{p}{);}
+		\PYG{n}{lcd\PYGZus{}text\PYGZus{}set\PYGZus{}cursor}\PYG{p}{(}\PYG{l+m+mi}{150}\PYG{p}{,} \PYG{l+m+mi}{220}\PYG{p}{);}
+		\PYG{n}{lcd\PYGZus{}text\PYGZus{}write}\PYG{p}{(}\PYG{n}{str}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{);}
+		\PYG{n}{wait\PYGZus{}ms}\PYG{p}{(}\PYG{l+m+mi}{100}\PYG{p}{);}
+		\PYG{n}{lcd\PYGZus{}fill\PYGZus{}screen}\PYG{p}{(}\PYG{n}{RA8875\PYGZus{}BLACK}\PYG{p}{);}
+		\PYG{c+c1}{//while(1) \PYGZob{}\PYGZcb{}}
+	\PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{SysTick\PYGZus{}Handler}\PYG{p}{(}\PYG{k+kt}{void}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+	\PYG{c+cm}{/*//// Used to poll controller inside interrupt,}
+\PYG{c+cm}{	 * now just handling in the game loop}
+\PYG{c+cm}{	// first 16 bits: digital}
+\PYG{c+cm}{	// next byte: left stick X}
+\PYG{c+cm}{	// next byte: left stick Y}
+\PYG{c+cm}{	int controller = read\PYGZus{}controller();}
+\PYG{c+cm}{	int digital = controller \PYGZgt{}\PYGZgt{} 16;}
+\PYG{c+cm}{	int joy\PYGZus{}x = (controller \PYGZam{} \PYGZti{}(0xff00)) \PYGZgt{}\PYGZgt{} 8;}
+\PYG{c+cm}{	int joy\PYGZus{}y = (controller \PYGZam{} \PYGZti{}(0xff));}
+\PYG{c+cm}{	if (digital \PYGZam{} (1 \PYGZlt{}\PYGZlt{} 7))}
+\PYG{c+cm}{		led(2);}
+\PYG{c+cm}{	else if (digital \PYGZam{} (1 \PYGZlt{}\PYGZlt{} 4))}
+\PYG{c+cm}{		led(1);}
+\PYG{c+cm}{	else if (digital)}
+\PYG{c+cm}{		led(0);}
+\PYG{c+cm}{	else}
+\PYG{c+cm}{		led(\PYGZhy{}1);}
+\PYG{c+cm}{	*/}
+
+	\PYG{c+c1}{// increment all bullets}
+	\PYG{c+c1}{// increment all rocks}
+	\PYG{c+c1}{// move ship if necessary \PYGZhy{}\PYGZhy{}\PYGZgt{} moved to game loop}
+	\PYG{k}{for}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}bullets}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)}
+		\PYG{n}{game}\PYG{p}{.}\PYG{n}{bullets}\PYG{p}{[}\PYG{n}{i}\PYG{p}{].}\PYG{n}{y} \PYG{o}{\PYGZhy{}=} \PYG{l+m+mi}{2}\PYG{p}{;}
+	\PYG{k}{for}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}rocks}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)}
+		\PYG{n}{game}\PYG{p}{.}\PYG{n}{rocks}\PYG{p}{[}\PYG{n}{i}\PYG{p}{].}\PYG{n}{y}\PYG{o}{++}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{int} \PYG{n+nf}{poll}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+	\PYG{k+kt}{int} \PYG{n}{controller} \PYG{o}{=} \PYG{n}{read\PYGZus{}controller}\PYG{p}{();}
+	\PYG{k+kt}{int} \PYG{n}{digital} \PYG{o}{=} \PYG{n}{controller} \PYG{o}{\PYGZgt{}\PYGZgt{}} \PYG{l+m+mi}{16}\PYG{p}{;}
+	\PYG{k+kt}{int} \PYG{n}{joy\PYGZus{}x} \PYG{o}{=} \PYG{p}{(}\PYG{n}{controller} \PYG{o}{\PYGZam{}} \PYG{o}{\PYGZti{}}\PYG{p}{(}\PYG{l+m+mh}{0xff00}\PYG{p}{))} \PYG{o}{\PYGZgt{}\PYGZgt{}} \PYG{l+m+mi}{8}\PYG{p}{;}
+	\PYG{k+kt}{int} \PYG{n}{joy\PYGZus{}y} \PYG{o}{=} \PYG{p}{(}\PYG{n}{controller} \PYG{o}{\PYGZam{}} \PYG{o}{\PYGZti{}}\PYG{p}{(}\PYG{l+m+mh}{0xff}\PYG{p}{));}
+	\PYG{k}{if} \PYG{p}{(}\PYG{n}{digital} \PYG{o}{\PYGZam{}} \PYG{p}{(}\PYG{l+m+mi}{1} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{7}\PYG{p}{))}
+		\PYG{n}{led}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{);}
+	\PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{n}{digital} \PYG{o}{\PYGZam{}} \PYG{p}{(}\PYG{l+m+mi}{1} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{4}\PYG{p}{))}
+		\PYG{n}{led}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{);}
+	\PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{n}{digital}\PYG{p}{)}
+		\PYG{n}{led}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);}
+	\PYG{k}{else}
+		\PYG{n}{led}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{);}
+	\PYG{k}{return} \PYG{n}{controller}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{int} \PYG{n+nf}{dpoll}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+	\PYG{k+kt}{int} \PYG{n}{controller} \PYG{o}{=} \PYG{n}{read\PYGZus{}controller}\PYG{p}{();}
+	\PYG{k+kt}{int} \PYG{n}{digital} \PYG{o}{=} \PYG{n}{controller} \PYG{o}{\PYGZgt{}\PYGZgt{}} \PYG{l+m+mi}{16}\PYG{p}{;}
+	\PYG{k+kt}{int} \PYG{n}{joy\PYGZus{}x} \PYG{o}{=} \PYG{p}{(}\PYG{n}{controller} \PYG{o}{\PYGZam{}} \PYG{o}{\PYGZti{}}\PYG{p}{(}\PYG{l+m+mh}{0xff00}\PYG{p}{))} \PYG{o}{\PYGZgt{}\PYGZgt{}} \PYG{l+m+mi}{8}\PYG{p}{;}
+	\PYG{k+kt}{int} \PYG{n}{joy\PYGZus{}y} \PYG{o}{=} \PYG{p}{(}\PYG{n}{controller} \PYG{o}{\PYGZam{}} \PYG{o}{\PYGZti{}}\PYG{p}{(}\PYG{l+m+mh}{0xff}\PYG{p}{));}
+	\PYG{k}{if} \PYG{p}{(}\PYG{n}{digital} \PYG{o}{\PYGZam{}} \PYG{p}{(}\PYG{l+m+mi}{1} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{7}\PYG{p}{))}
+		\PYG{n}{led}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{);}
+	\PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{n}{digital} \PYG{o}{\PYGZam{}} \PYG{p}{(}\PYG{l+m+mi}{1} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{4}\PYG{p}{))}
+		\PYG{n}{led}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{);}
+	\PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{n}{digital}\PYG{p}{)}
+		\PYG{n}{led}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);}
+	\PYG{k}{else}
+		\PYG{n}{led}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{);}
+	\PYG{k}{return} \PYG{n}{digital}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{int} \PYG{n+nf}{get\PYGZus{}controller}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+	\PYG{k+kt}{int} \PYG{n}{controller} \PYG{o}{=} \PYG{n}{read\PYGZus{}controller}\PYG{p}{();}
+	\PYG{k}{return} \PYG{n}{controller} \PYG{o}{\PYGZgt{}\PYGZgt{}} \PYG{l+m+mi}{16}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{start\PYGZus{}screen}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+	\PYG{n}{wait\PYGZus{}ms}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{);}
+	\PYG{n}{SPI\PYGZus{}SPEED} \PYG{o}{=} \PYG{l+m+mh}{0xC}\PYG{p}{;}
+	\PYG{n}{wait\PYGZus{}ms}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{);}
+
+	\PYG{c+c1}{//displayOn(true);}
+	\PYG{n}{lcd\PYGZus{}write\PYGZus{}reg}\PYG{p}{(}\PYG{n}{RA8875\PYGZus{}PWRR}\PYG{p}{,} \PYG{n}{RA8875\PYGZus{}PWRR\PYGZus{}NORMAL} \PYG{o}{|} \PYG{n}{RA8875\PYGZus{}PWRR\PYGZus{}DISPON}\PYG{p}{);}
+	\PYG{c+c1}{//GPIOX(true);      // Enable TFT \PYGZhy{} display enable tied to GPIOX}
+	\PYG{n}{lcd\PYGZus{}write\PYGZus{}reg}\PYG{p}{(}\PYG{n}{RA8875\PYGZus{}GPIOX}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{);}
+	\PYG{c+c1}{//PWM1config(true, RA8875\PYGZus{}PWM\PYGZus{}CLK\PYGZus{}DIV1024); // PWM output for backlight}
+	\PYG{n}{lcd\PYGZus{}write\PYGZus{}reg}\PYG{p}{(}\PYG{n}{RA8875\PYGZus{}P1CR}\PYG{p}{,} \PYG{n}{RA8875\PYGZus{}P1CR\PYGZus{}ENABLE} \PYG{o}{|} \PYG{p}{(}\PYG{n}{RA8875\PYGZus{}PWM\PYGZus{}CLK\PYGZus{}DIV1024} \PYG{o}{\PYGZam{}} \PYG{l+m+mh}{0xF}\PYG{p}{));}
+	\PYG{c+c1}{//PWM1out(255);}
+	\PYG{n}{lcd\PYGZus{}write\PYGZus{}reg}\PYG{p}{(}\PYG{n}{RA8875\PYGZus{}P1DCR}\PYG{p}{,} \PYG{l+m+mi}{255}\PYG{p}{);}
+	\PYG{n}{lcd\PYGZus{}fill\PYGZus{}screen}\PYG{p}{(}\PYG{n}{RA8875\PYGZus{}BLACK}\PYG{p}{);}
+	\PYG{c+c1}{//wait\PYGZus{}ms(100);}
+
+	\PYG{n}{lcd\PYGZus{}text\PYGZus{}mode}\PYG{p}{();}
+	\PYG{n}{lcd\PYGZus{}cursor\PYGZus{}blink}\PYG{p}{(}\PYG{l+m+mi}{32}\PYG{p}{);}
+	\PYG{n}{lcd\PYGZus{}text\PYGZus{}set\PYGZus{}cursor}\PYG{p}{(}\PYG{l+m+mi}{150}\PYG{p}{,} \PYG{l+m+mi}{220}\PYG{p}{);}
+
+	\PYG{k+kt}{char} \PYG{n}{test}\PYG{p}{[}\PYG{l+m+mi}{58}\PYG{p}{]} \PYG{o}{=} \PYG{l+s}{\PYGZdq{}Welcome to Intrastellar! Press any button to continue... \PYGZdq{}}\PYG{p}{;}
+	\PYG{n}{lcd\PYGZus{}text\PYGZus{}transparent}\PYG{p}{(}\PYG{n}{RA8875\PYGZus{}WHITE}\PYG{p}{);}
+	\PYG{n}{lcd\PYGZus{}text\PYGZus{}color}\PYG{p}{(}\PYG{n}{RA8875\PYGZus{}WHITE}\PYG{p}{,} \PYG{n}{RA8875\PYGZus{}RED}\PYG{p}{);}
+	\PYG{n}{lcd\PYGZus{}text\PYGZus{}write}\PYG{p}{(}\PYG{n}{test}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{);}
+
+	\PYG{n}{lcd\PYGZus{}text\PYGZus{}set\PYGZus{}cursor}\PYG{p}{(}\PYG{l+m+mi}{150}\PYG{p}{,} \PYG{l+m+mi}{240}\PYG{p}{);}
+	\PYG{k+kt}{char} \PYG{n}{next}\PYG{p}{[}\PYG{l+m+mi}{13}\PYG{p}{]} \PYG{o}{=} \PYG{l+s}{\PYGZdq{}High Score: \PYGZdq{}}\PYG{p}{;}
+	\PYG{n}{lcd\PYGZus{}text\PYGZus{}write}\PYG{p}{(}\PYG{n}{next}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{);}
+
+	\PYG{n}{lcd\PYGZus{}text\PYGZus{}set\PYGZus{}cursor}\PYG{p}{(}\PYG{l+m+mi}{250}\PYG{p}{,} \PYG{l+m+mi}{240}\PYG{p}{);}
+	\PYG{k+kt}{char} \PYG{n}{score}\PYG{p}{[}\PYG{l+m+mi}{15}\PYG{p}{];}
+	\PYG{n}{itoa}\PYG{p}{(}\PYG{n}{game}\PYG{p}{.}\PYG{n}{high\PYGZus{}score}\PYG{o}{*}\PYG{l+m+mi}{100}\PYG{p}{,} \PYG{n}{score}\PYG{p}{,} \PYG{l+m+mi}{10}\PYG{p}{);}
+	\PYG{n}{lcd\PYGZus{}text\PYGZus{}write}\PYG{p}{(}\PYG{n}{score}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{);}
+
+	\PYG{k+kt}{int} \PYG{n}{controller} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+	\PYG{k}{while} \PYG{p}{(}\PYG{n}{controller} \PYG{o}{!=} \PYG{n}{X}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+		\PYG{n}{controller} \PYG{o}{=} \PYG{n}{get\PYGZus{}controller}\PYG{p}{();}
+		\PYG{k}{if} \PYG{p}{(}\PYG{n}{controller} \PYG{o}{==} \PYG{n}{RB}\PYG{p}{)}
+			\PYG{n}{controller\PYGZus{}test}\PYG{p}{();}
+	\PYG{p}{\PYGZcb{}}
+	\PYG{n}{lcd\PYGZus{}cursor\PYGZus{}blink}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{clear\PYGZus{}screen}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+	\PYG{n}{lcd\PYGZus{}fill\PYGZus{}screen}\PYG{p}{(}\PYG{n}{RA8875\PYGZus{}BLACK}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{bool} \PYG{n+nf}{end\PYGZus{}screen}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+	\PYG{n}{lcd\PYGZus{}write\PYGZus{}reg}\PYG{p}{(}\PYG{n}{RA8875\PYGZus{}MWCR1}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{);}
+	\PYG{n}{lcd\PYGZus{}write\PYGZus{}reg}\PYG{p}{(}\PYG{n}{RA8875\PYGZus{}LTPR0}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{);}
+	\PYG{n}{clear\PYGZus{}screen}\PYG{p}{();}
+
+	\PYG{n}{lcd\PYGZus{}text\PYGZus{}mode}\PYG{p}{();}
+	\PYG{n}{lcd\PYGZus{}cursor\PYGZus{}blink}\PYG{p}{(}\PYG{l+m+mi}{32}\PYG{p}{);}
+	\PYG{n}{lcd\PYGZus{}text\PYGZus{}set\PYGZus{}cursor}\PYG{p}{(}\PYG{l+m+mi}{250}\PYG{p}{,} \PYG{l+m+mi}{220}\PYG{p}{);}
+
+	\PYG{k+kt}{int} \PYG{n}{size\PYGZus{}} \PYG{o}{=} \PYG{l+m+mi}{20}\PYG{p}{;}
+	\PYG{k+kt}{char} \PYG{n}{str}\PYG{p}{[}\PYG{n}{size\PYGZus{}}\PYG{p}{];}
+	\PYG{n}{itoa}\PYG{p}{(}\PYG{n}{game}\PYG{p}{.}\PYG{n}{points}\PYG{p}{,} \PYG{n}{str}\PYG{p}{,} \PYG{l+m+mi}{10}\PYG{p}{);}
+	\PYG{k+kt}{char} \PYG{n}{test}\PYG{p}{[}\PYG{l+m+mi}{36}\PYG{p}{]} \PYG{o}{=} \PYG{l+s}{\PYGZdq{}You lose! Press X to play again... \PYGZdq{}}\PYG{p}{;}
+	\PYG{n}{lcd\PYGZus{}text\PYGZus{}transparent}\PYG{p}{(}\PYG{n}{RA8875\PYGZus{}WHITE}\PYG{p}{);}
+	\PYG{n}{lcd\PYGZus{}text\PYGZus{}color}\PYG{p}{(}\PYG{n}{RA8875\PYGZus{}WHITE}\PYG{p}{,} \PYG{n}{RA8875\PYGZus{}RED}\PYG{p}{);}
+	\PYG{n}{lcd\PYGZus{}text\PYGZus{}write}\PYG{p}{(}\PYG{n}{test}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{);}
+
+	\PYG{n}{lcd\PYGZus{}text\PYGZus{}set\PYGZus{}cursor}\PYG{p}{(}\PYG{l+m+mi}{250}\PYG{p}{,} \PYG{l+m+mi}{240}\PYG{p}{);}
+	\PYG{k+kt}{char} \PYG{n}{next}\PYG{p}{[}\PYG{l+m+mi}{13}\PYG{p}{]} \PYG{o}{=} \PYG{l+s}{\PYGZdq{}Your Score: \PYGZdq{}}\PYG{p}{;}
+	\PYG{n}{lcd\PYGZus{}text\PYGZus{}write}\PYG{p}{(}\PYG{n}{next}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{);}
+
+	\PYG{n}{lcd\PYGZus{}text\PYGZus{}set\PYGZus{}cursor}\PYG{p}{(}\PYG{l+m+mi}{360}\PYG{p}{,} \PYG{l+m+mi}{240}\PYG{p}{);}
+	\PYG{n}{lcd\PYGZus{}text\PYGZus{}write}\PYG{p}{(}\PYG{n}{str}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{);}
+
+	\PYG{k+kt}{int} \PYG{n}{controller} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+	\PYG{k}{while} \PYG{p}{(}\PYG{n}{controller} \PYG{o}{!=} \PYG{n}{X}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+		\PYG{n}{controller} \PYG{o}{=} \PYG{n}{get\PYGZus{}controller}\PYG{p}{();}
+	\PYG{p}{\PYGZcb{}}
+	\PYG{n}{lcd\PYGZus{}cursor\PYGZus{}blink}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);}
+	\PYG{n}{lcd\PYGZus{}text\PYGZus{}set\PYGZus{}cursor}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{);}
+	\PYG{k}{return} \PYG{n+nb}{true}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{draw\PYGZus{}ship}\PYG{p}{(}\PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{x}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+	\PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{y} \PYG{o}{=} \PYG{l+m+mi}{450}\PYG{p}{;}
+	\PYG{n}{lcd\PYGZus{}fill\PYGZus{}triangle}\PYG{p}{(}\PYG{n}{x}\PYG{o}{+}\PYG{l+m+mi}{25}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{7}\PYG{p}{,} \PYG{n}{y}\PYG{p}{,} \PYG{n}{x}\PYG{o}{+}\PYG{l+m+mi}{25}\PYG{o}{+}\PYG{l+m+mi}{7}\PYG{p}{,} \PYG{n}{y}\PYG{p}{,} \PYG{n}{x}\PYG{o}{+}\PYG{l+m+mi}{25}\PYG{p}{,} \PYG{n}{y}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{RA8875\PYGZus{}WHITE}\PYG{p}{);}
+	\PYG{n}{lcd\PYGZus{}fill\PYGZus{}rect}\PYG{p}{(}\PYG{n}{x}\PYG{p}{,} \PYG{n}{y}\PYG{p}{,} \PYG{l+m+mi}{50}\PYG{p}{,} \PYG{l+m+mi}{18}\PYG{p}{,} \PYG{n}{RA8875\PYGZus{}WHITE}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{game\PYGZus{}run}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+	\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{timeout} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+	\PYG{c+c1}{// check controller}
+	\PYG{c+c1}{// check collisions}
+	\PYG{k+kt}{int} \PYG{n}{controller} \PYG{o}{=} \PYG{n}{get\PYGZus{}controller}\PYG{p}{();}
+	\PYG{k}{for}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}bullets}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+		\PYG{n}{Point} \PYG{n}{bullet} \PYG{o}{=} \PYG{n}{game}\PYG{p}{.}\PYG{n}{bullets}\PYG{p}{[}\PYG{n}{i}\PYG{p}{];}
+		\PYG{k}{if}\PYG{p}{(}\PYG{n}{bullet}\PYG{p}{.}\PYG{n}{y} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{15}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+			\PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}bullets}\PYG{o}{\PYGZhy{}\PYGZhy{}}\PYG{p}{;}
+			\PYG{k}{for} \PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{k} \PYG{o}{=} \PYG{n}{i}\PYG{p}{;} \PYG{n}{k} \PYG{o}{\PYGZlt{}} \PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}bullets}\PYG{p}{;} \PYG{n}{k}\PYG{o}{++}\PYG{p}{)}
+				\PYG{n}{game}\PYG{p}{.}\PYG{n}{bullets}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{=} \PYG{n}{game}\PYG{p}{.}\PYG{n}{bullets}\PYG{p}{[}\PYG{n}{i}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{];}
+		\PYG{p}{\PYGZcb{}}
+	\PYG{p}{\PYGZcb{}}
+	\PYG{k}{if} \PYG{p}{(}\PYG{n}{timeout} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)}
+		\PYG{n}{timeout}\PYG{o}{\PYGZhy{}\PYGZhy{}}\PYG{p}{;}
+	\PYG{k}{if} \PYG{p}{(}\PYG{n}{controller} \PYG{o}{\PYGZam{}} \PYG{n}{X}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+		\PYG{k}{if}\PYG{p}{(}\PYG{n}{timeout} \PYG{o}{\PYGZlt{}=} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+			\PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}bullets}\PYG{o}{++}\PYG{p}{;}
+			\PYG{c+c1}{//game.bullets[game.num\PYGZus{}bullets\PYGZhy{}1].x = game.ship + 25;}
+			\PYG{c+c1}{//game.bullets[game.num\PYGZus{}bullets\PYGZhy{}1].y = 450;}
+			\PYG{n}{Point} \PYG{n}{pt} \PYG{o}{=} \PYG{p}{\PYGZob{}}\PYG{n}{game}\PYG{p}{.}\PYG{n}{ship} \PYG{o}{+} \PYG{l+m+mi}{25}\PYG{p}{,} \PYG{l+m+mi}{450}\PYG{p}{\PYGZcb{};}
+			\PYG{n}{game}\PYG{p}{.}\PYG{n}{bullets}\PYG{p}{[}\PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}bullets}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{=} \PYG{n}{pt}\PYG{p}{;}
+			\PYG{n}{timeout} \PYG{o}{=} \PYG{l+m+mi}{10}\PYG{p}{;}
+		\PYG{p}{\PYGZcb{}}
+	\PYG{p}{\PYGZcb{}}
+	\PYG{k}{if} \PYG{p}{(}\PYG{n}{controller} \PYG{o}{\PYGZam{}} \PYG{n}{RB}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+		\PYG{k}{if}\PYG{p}{(}\PYG{n}{game}\PYG{p}{.}\PYG{n}{ship} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{750}\PYG{p}{)}
+			\PYG{n}{game}\PYG{p}{.}\PYG{n}{ship} \PYG{o}{+=} \PYG{l+m+mi}{10}\PYG{p}{;}
+	\PYG{p}{\PYGZcb{}}
+	\PYG{k}{if} \PYG{p}{(}\PYG{n}{controller} \PYG{o}{\PYGZam{}} \PYG{n}{LB}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+		\PYG{k}{if}\PYG{p}{(}\PYG{n}{game}\PYG{p}{.}\PYG{n}{ship} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{10}\PYG{p}{)}
+			\PYG{n}{game}\PYG{p}{.}\PYG{n}{ship} \PYG{o}{\PYGZhy{}=} \PYG{l+m+mi}{10}\PYG{p}{;}
+	\PYG{p}{\PYGZcb{}}
+
+	\PYG{c+c1}{// check for lives lost and rock collisions}
+	\PYG{k}{for}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}rocks}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+		\PYG{n}{Point} \PYG{n}{rock} \PYG{o}{=} \PYG{n}{game}\PYG{p}{.}\PYG{n}{rocks}\PYG{p}{[}\PYG{n}{i}\PYG{p}{];}
+		\PYG{k}{if} \PYG{p}{(}\PYG{n}{rock}\PYG{p}{.}\PYG{n}{y} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{430}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+			\PYG{n}{game}\PYG{p}{.}\PYG{n}{lives}\PYG{o}{\PYGZhy{}\PYGZhy{}}\PYG{p}{;}
+			\PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}rocks}\PYG{o}{\PYGZhy{}\PYGZhy{}}\PYG{p}{;}
+			\PYG{k}{for} \PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{k} \PYG{o}{=} \PYG{n}{i}\PYG{p}{;} \PYG{n}{k} \PYG{o}{\PYGZlt{}} \PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}rocks}\PYG{p}{;} \PYG{n}{k}\PYG{o}{++}\PYG{p}{)}
+				\PYG{n}{game}\PYG{p}{.}\PYG{n}{rocks}\PYG{p}{[}\PYG{n}{k}\PYG{p}{]} \PYG{o}{=} \PYG{n}{game}\PYG{p}{.}\PYG{n}{rocks}\PYG{p}{[}\PYG{n}{k}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{];}
+		\PYG{p}{\PYGZcb{}}
+		\PYG{k}{for}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{j} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{j} \PYG{o}{\PYGZlt{}} \PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}bullets}\PYG{p}{;} \PYG{n}{j}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+			\PYG{n}{Point} \PYG{n}{bullet} \PYG{o}{=} \PYG{n}{game}\PYG{p}{.}\PYG{n}{bullets}\PYG{p}{[}\PYG{n}{j}\PYG{p}{];}
+			\PYG{k}{if} \PYG{p}{(}\PYG{n}{bullet}\PYG{p}{.}\PYG{n}{x} \PYG{o}{\PYGZlt{}=} \PYG{n}{rock}\PYG{p}{.}\PYG{n}{x} \PYG{o}{+} \PYG{n}{ROCK\PYGZus{}RAD} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{bullet}\PYG{p}{.}\PYG{n}{x} \PYG{o}{\PYGZgt{}=} \PYG{n}{rock}\PYG{p}{.}\PYG{n}{x} \PYG{o}{\PYGZhy{}} \PYG{n}{ROCK\PYGZus{}RAD}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+				\PYG{k}{if} \PYG{p}{(}\PYG{n}{bullet}\PYG{p}{.}\PYG{n}{y} \PYG{o}{\PYGZlt{}=} \PYG{n}{rock}\PYG{p}{.}\PYG{n}{y} \PYG{o}{+} \PYG{n}{ROCK\PYGZus{}RAD}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+					\PYG{c+c1}{// bullet hit}
+					\PYG{n}{game}\PYG{p}{.}\PYG{n}{points} \PYG{o}{+=} \PYG{l+m+mi}{100}\PYG{p}{;}
+					\PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}rocks}\PYG{o}{\PYGZhy{}\PYGZhy{}}\PYG{p}{;}
+					\PYG{k}{for} \PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{k} \PYG{o}{=} \PYG{n}{i}\PYG{p}{;} \PYG{n}{k} \PYG{o}{\PYGZlt{}} \PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}rocks}\PYG{p}{;} \PYG{n}{k}\PYG{o}{++}\PYG{p}{)}
+						\PYG{n}{game}\PYG{p}{.}\PYG{n}{rocks}\PYG{p}{[}\PYG{n}{k}\PYG{p}{]} \PYG{o}{=} \PYG{n}{game}\PYG{p}{.}\PYG{n}{rocks}\PYG{p}{[}\PYG{n}{k}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{];}
+
+					\PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}bullets}\PYG{o}{\PYGZhy{}\PYGZhy{}}\PYG{p}{;}
+					\PYG{k}{for} \PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{k} \PYG{o}{=} \PYG{n}{j}\PYG{p}{;} \PYG{n}{k} \PYG{o}{\PYGZlt{}} \PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}bullets}\PYG{p}{;} \PYG{n}{k}\PYG{o}{++}\PYG{p}{)}
+						\PYG{n}{game}\PYG{p}{.}\PYG{n}{bullets}\PYG{p}{[}\PYG{n}{k}\PYG{p}{]} \PYG{o}{=} \PYG{n}{game}\PYG{p}{.}\PYG{n}{bullets}\PYG{p}{[}\PYG{n}{k}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{];}
+					\PYG{n}{i}\PYG{o}{\PYGZhy{}\PYGZhy{}}\PYG{p}{;}
+					\PYG{n}{j}\PYG{o}{\PYGZhy{}\PYGZhy{}}\PYG{p}{;}
+				\PYG{p}{\PYGZcb{}}
+			\PYG{p}{\PYGZcb{}}
+		\PYG{p}{\PYGZcb{}}
+	\PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{int} \PYG{n+nf}{main}\PYG{p}{(}\PYG{k+kt}{void}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+	\PYG{c+c1}{// setup (green then red after done)}
+	\PYG{n}{led}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{);}
+	\PYG{n}{clock\PYGZus{}setup}\PYG{p}{();}
+	\PYG{n}{gpio\PYGZus{}setup}\PYG{p}{();}
+	\PYG{n}{spi\PYGZus{}setup}\PYG{p}{();}
+	\PYG{n}{interrupt\PYGZus{}setup}\PYG{p}{();}
+	\PYG{n}{eep\PYGZus{}setup}\PYG{p}{();}
+	\PYG{n}{led}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{);}
+
+    \PYG{c+c1}{//eep\PYGZus{}write(5);}
+    \PYG{c+c1}{//wait\PYGZus{}ms(100);}
+
+	\PYG{n}{lcd\PYGZus{}reset}\PYG{p}{();}
+	\PYG{n}{lcd\PYGZus{}init}\PYG{p}{();}
+
+	\PYG{c+c1}{//game.bullets = (Point*)malloc(50 * sizeof(Point));}
+	\PYG{c+c1}{//game.rocks = (Point*)malloc(50 * sizeof(Point));}
+	\PYG{c+c1}{//game.bullets[0] = Point\PYGZob{}\PYGZcb{};}
+	\PYG{c+c1}{//game.rocks[0] =}
+	\PYG{c+c1}{//game.num\PYGZus{}bullets = 1;}
+	\PYG{c+c1}{//game.bullets[game.num\PYGZus{}bullets\PYGZhy{}1].x = 375;}
+	\PYG{c+c1}{//game.bullets[game.num\PYGZus{}bullets\PYGZhy{}1].y = 310;}
+	\PYG{c+c1}{//game.num\PYGZus{}rocks = 1;}
+	\PYG{c+c1}{//game.rocks[game.num\PYGZus{}rocks\PYGZhy{}1].x = 400;}
+	\PYG{c+c1}{//game.rocks[game.num\PYGZus{}rocks\PYGZhy{}1].y = 120;}
+	\PYG{n}{game}\PYG{p}{.}\PYG{n}{play} \PYG{o}{=} \PYG{n+nb}{true}\PYG{p}{;}
+
+	\PYG{k+kt}{int} \PYG{n}{layer} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+	\PYG{k+kt}{int} \PYG{n}{r}\PYG{p}{,} \PYG{n}{r1}\PYG{p}{;}
+	\PYG{k+kt}{int} \PYG{n}{speed}\PYG{p}{;}
+	\PYG{k}{while}\PYG{p}{(}\PYG{n}{game}\PYG{p}{.}\PYG{n}{play}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+		\PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}bullets} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+		\PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}rocks} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+		\PYG{n}{game}\PYG{p}{.}\PYG{n}{ship} \PYG{o}{=} \PYG{l+m+mi}{350}\PYG{p}{;}
+		\PYG{n}{game}\PYG{p}{.}\PYG{n}{high\PYGZus{}score} \PYG{o}{=} \PYG{n}{eep\PYGZus{}read}\PYG{p}{();}
+		\PYG{n}{start\PYGZus{}screen}\PYG{p}{();} \PYG{c+c1}{// blocks until button press}
+		\PYG{n}{lcd\PYGZus{}graphics\PYGZus{}mode}\PYG{p}{();}
+		\PYG{n}{game}\PYG{p}{.}\PYG{n}{lives} \PYG{o}{=} \PYG{l+m+mi}{3}\PYG{p}{;}
+		\PYG{n}{game}\PYG{p}{.}\PYG{n}{points} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+		\PYG{k}{while}\PYG{p}{(}\PYG{n}{game}\PYG{p}{.}\PYG{n}{lives} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+			\PYG{c+c1}{// game loop}
+			\PYG{c+c1}{// generate rocks}
+			\PYG{n}{r} \PYG{o}{=} \PYG{n}{rand}\PYG{p}{()} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{750} \PYG{o}{+} \PYG{l+m+mi}{25} \PYG{p}{;} \PYG{c+c1}{// [25, 775]}
+			\PYG{n}{r1} \PYG{o}{=} \PYG{n}{rand}\PYG{p}{()} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{9} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{;} \PYG{c+c1}{// [1 10]}
+			\PYG{k}{if} \PYG{p}{(}\PYG{n}{r} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{11} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{layer} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{r1} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{7}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+				\PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}rocks}\PYG{o}{++}\PYG{p}{;}
+				\PYG{n}{game}\PYG{p}{.}\PYG{n}{rocks}\PYG{p}{[}\PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}rocks}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{].}\PYG{n}{x} \PYG{o}{=} \PYG{n}{r}\PYG{p}{;}
+				\PYG{n}{game}\PYG{p}{.}\PYG{n}{rocks}\PYG{p}{[}\PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}rocks}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{].}\PYG{n}{y} \PYG{o}{=} \PYG{l+m+mi}{20}\PYG{p}{;}
+				\PYG{c+c1}{//Point pt = \PYGZob{}r, 20\PYGZcb{};}
+				\PYG{c+c1}{//game.rocks[game.num\PYGZus{}rocks\PYGZhy{}1] = pt;}
+			\PYG{p}{\PYGZcb{}}
+			\PYG{c+c1}{// show layer}
+			\PYG{n}{lcd\PYGZus{}write\PYGZus{}reg}\PYG{p}{(}\PYG{n}{RA8875\PYGZus{}LTPR0}\PYG{p}{,} \PYG{n}{layer}\PYG{p}{);}
+
+			\PYG{c+c1}{// switch and write}
+			\PYG{n}{layer} \PYG{o}{\PYGZca{}=} \PYG{l+m+mi}{1}\PYG{p}{;}
+			\PYG{n}{lcd\PYGZus{}write\PYGZus{}reg}\PYG{p}{(}\PYG{n}{RA8875\PYGZus{}MWCR1}\PYG{p}{,} \PYG{n}{layer}\PYG{p}{);}
+			\PYG{n}{clear\PYGZus{}screen}\PYG{p}{();}
+			\PYG{n}{draw\PYGZus{}ship}\PYG{p}{(}\PYG{n}{game}\PYG{p}{.}\PYG{n}{ship}\PYG{p}{);}
+			\PYG{k}{for}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}bullets}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)}
+				\PYG{n}{lcd\PYGZus{}draw\PYGZus{}bullet}\PYG{p}{(}\PYG{n}{game}\PYG{p}{.}\PYG{n}{bullets}\PYG{p}{[}\PYG{n}{i}\PYG{p}{].}\PYG{n}{x}\PYG{p}{,} \PYG{n}{game}\PYG{p}{.}\PYG{n}{bullets}\PYG{p}{[}\PYG{n}{i}\PYG{p}{].}\PYG{n}{y}\PYG{p}{);}
+			\PYG{k}{for}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{n}{game}\PYG{p}{.}\PYG{n}{num\PYGZus{}rocks}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)}
+				\PYG{n}{lcd\PYGZus{}fill\PYGZus{}circle}\PYG{p}{(}\PYG{n}{game}\PYG{p}{.}\PYG{n}{rocks}\PYG{p}{[}\PYG{n}{i}\PYG{p}{].}\PYG{n}{x}\PYG{p}{,} \PYG{n}{game}\PYG{p}{.}\PYG{n}{rocks}\PYG{p}{[}\PYG{n}{i}\PYG{p}{].}\PYG{n}{y}\PYG{p}{,}  \PYG{n}{ROCK\PYGZus{}RAD}\PYG{p}{,}  \PYG{n}{RA8875\PYGZus{}WHITE}\PYG{p}{);}
+			\PYG{n}{game\PYGZus{}run}\PYG{p}{();}
+		\PYG{p}{\PYGZcb{}}
+		\PYG{k}{if} \PYG{p}{(}\PYG{n}{game}\PYG{p}{.}\PYG{n}{points} \PYG{o}{\PYGZgt{}} \PYG{p}{(}\PYG{n}{game}\PYG{p}{.}\PYG{n}{high\PYGZus{}score} \PYG{o}{*} \PYG{l+m+mi}{100}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+			\PYG{n}{eep\PYGZus{}write}\PYG{p}{(}\PYG{n}{game}\PYG{p}{.}\PYG{n}{points} \PYG{o}{/} \PYG{l+m+mi}{100}\PYG{p}{);}
+		\PYG{p}{\PYGZcb{}}
+		\PYG{n}{game}\PYG{p}{.}\PYG{n}{play} \PYG{o}{=} \PYG{n}{end\PYGZus{}screen}\PYG{p}{();}
+		\PYG{n}{wait\PYGZus{}ms}\PYG{p}{(}\PYG{l+m+mi}{2000}\PYG{p}{);}
+	\PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

@@ -1,0 +1,95 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/*}
+\PYG{c+cm}{ * eeprom.c}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *  Created on: Apr 28, 2019}
+\PYG{c+cm}{ *      Author: Zach}
+\PYG{c+cm}{ */}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}eeprom.h\PYGZdq{}}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{ * Starts I2C communication}
+\PYG{c+cm}{ * @param: void}
+\PYG{c+cm}{ * @return: void}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{void} \PYG{n+nf}{i2c\PYGZus{}start}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+	\PYG{n}{I2C1CONSET} \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{3}\PYG{p}{);} \PYG{c+c1}{// ****}
+	\PYG{n}{I2C1CONSET} \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{5}\PYG{p}{);} \PYG{c+c1}{// SR style flip flop (this is readable)}
+	\PYG{n}{I2C1CONCLR} \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{3}\PYG{p}{);} \PYG{c+c1}{// cannot read from here \PYGZhy{}\PYGZhy{} no OR\PYGZsq{}s etc}
+	\PYG{k}{while}\PYG{p}{(((}\PYG{n}{I2C1CONSET} \PYG{o}{\PYGZgt{}\PYGZgt{}} \PYG{l+m+mi}{3}\PYG{p}{)} \PYG{o}{\PYGZam{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}\PYGZcb{}} \PYG{c+c1}{/////////STUCK HERE}
+	\PYG{n}{I2C1CONCLR} \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{5}\PYG{p}{);} \PYG{c+c1}{// write to clear register}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{ * write data to I2C bus}
+\PYG{c+cm}{ * @param: int data, to be written to bus}
+\PYG{c+cm}{ * @return: void}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{void} \PYG{n+nf}{i2c\PYGZus{}write}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{data}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+	\PYG{n}{I2C1DAT} \PYG{o}{=} \PYG{n}{data}\PYG{p}{;}
+	\PYG{n}{I2C1CONCLR} \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{3}\PYG{p}{);}
+	\PYG{k}{while}\PYG{p}{(((}\PYG{n}{I2C1CONSET} \PYG{o}{\PYGZgt{}\PYGZgt{}} \PYG{l+m+mi}{3}\PYG{p}{)} \PYG{o}{\PYGZam{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{ * Read from I2C bus}
+\PYG{c+cm}{ * @param: void}
+\PYG{c+cm}{ * @return: int \PYGZhy{} bitstream read from the bus}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{int} \PYG{n+nf}{i2c\PYGZus{}read}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+	\PYG{n}{I2C1CONCLR} \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{3}\PYG{p}{);}
+	\PYG{k}{while}\PYG{p}{(((}\PYG{n}{I2C1CONSET} \PYG{o}{\PYGZgt{}\PYGZgt{}} \PYG{l+m+mi}{3}\PYG{p}{)} \PYG{o}{\PYGZam{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}\PYGZcb{}}
+	\PYG{k+kt}{int} \PYG{n}{data} \PYG{o}{=} \PYG{n}{I2C1DAT}\PYG{p}{;}
+	\PYG{k}{return} \PYG{n}{data}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{ * Stop I2C communication}
+\PYG{c+cm}{ * @param: void}
+\PYG{c+cm}{ * @return: void}
+\PYG{c+cm}{ */}
+\PYG{k+kt}{void} \PYG{n+nf}{i2c\PYGZus{}stop}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+	\PYG{n}{I2C1CONSET} \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{4}\PYG{p}{);}
+	\PYG{n}{I2C1CONCLR} \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZlt{}\PYGZlt{}}\PYG{l+m+mi}{3}\PYG{p}{);}
+	\PYG{k}{while}\PYG{p}{((}\PYG{n}{I2C1CONSET} \PYG{o}{\PYGZgt{}\PYGZgt{}} \PYG{l+m+mi}{4}\PYG{p}{)} \PYG{o}{\PYGZam{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}\PYGZcb{}} \PYG{c+c1}{// wait if == 1}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{eep\PYGZus{}setup}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+	\PYG{c+c1}{// setup pins P0.19/P0.20 as I2C}
+	\PYG{n}{PINSEL1} \PYG{o}{|=} \PYG{p}{(}\PYG{l+m+mh}{0xf} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{6}\PYG{p}{);}
+
+	\PYG{c+c1}{// enable I2C}
+	\PYG{n}{I2C1CONSET} \PYG{o}{=} \PYG{l+m+mh}{0x40}\PYG{p}{;}
+
+	\PYG{c+c1}{// set duty count to 60 (30 each)}
+	\PYG{n}{I2C1SCLH} \PYG{o}{=} \PYG{l+m+mi}{120}\PYG{p}{;}
+	\PYG{n}{I2C1SCLL} \PYG{o}{=} \PYG{l+m+mi}{120}\PYG{p}{;}
+
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{eep\PYGZus{}write}\PYG{p}{(}\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{data}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+	\PYG{c+c1}{// I2C test}
+	\PYG{n}{i2c\PYGZus{}start}\PYG{p}{();}
+	\PYG{n}{i2c\PYGZus{}write}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b10100000}\PYG{p}{);} \PYG{c+c1}{// first 7 bits are address, last is R/!W \PYGZhy{}\PYGZhy{} in our case write}
+	\PYG{c+c1}{// check ACK with I2C stat reg}
+	\PYG{n}{i2c\PYGZus{}write}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);} \PYG{c+c1}{// address high \PYGZus{}\PYGZus{}\PYGZus{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}}
+	\PYG{n}{i2c\PYGZus{}write}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);} \PYG{c+c1}{// address low (full byte)}
+	\PYG{n}{i2c\PYGZus{}write}\PYG{p}{(}\PYG{n}{data}\PYG{p}{);} \PYG{c+c1}{// data}
+	\PYG{n}{i2c\PYGZus{}stop}\PYG{p}{();}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{int} \PYG{n+nf}{eep\PYGZus{}read}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+	\PYG{c+c1}{// I2C test}
+	\PYG{n}{i2c\PYGZus{}start}\PYG{p}{();}
+	\PYG{n}{i2c\PYGZus{}write}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b10100000}\PYG{p}{);} \PYG{c+c1}{// write}
+	\PYG{c+c1}{// check ACK with I2C stat reg}
+	\PYG{n}{i2c\PYGZus{}write}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);} \PYG{c+c1}{// address high \PYGZus{}\PYGZus{}\PYGZus{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}}
+	\PYG{n}{i2c\PYGZus{}write}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);} \PYG{c+c1}{// address low (full byte)}
+	\PYG{n}{i2c\PYGZus{}start}\PYG{p}{();}
+	\PYG{n}{i2c\PYGZus{}write}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b10100001}\PYG{p}{);} \PYG{c+c1}{// read}
+	\PYG{k+kt}{int} \PYG{n}{data} \PYG{o}{=} \PYG{n}{i2c\PYGZus{}read}\PYG{p}{();}
+	\PYG{n}{i2c\PYGZus{}stop}\PYG{p}{();}
+	\PYG{k}{return} \PYG{n}{data}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

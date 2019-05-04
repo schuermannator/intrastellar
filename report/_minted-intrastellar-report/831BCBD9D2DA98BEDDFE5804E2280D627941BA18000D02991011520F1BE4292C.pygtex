@@ -1,0 +1,18 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/*}
+\PYG{c+cm}{ * ps2.h}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *  Created on: Apr 28, 2019}
+\PYG{c+cm}{ *      Author: Zach}
+\PYG{c+cm}{ */}
+
+\PYG{c+cp}{\PYGZsh{}ifndef PS2\PYGZus{}H\PYGZus{}}
+\PYG{c+cp}{\PYGZsh{}define PS2\PYGZus{}H\PYGZus{}}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}intrastellar.h\PYGZdq{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{ps2\PYGZus{}spi\PYGZus{}setup}\PYG{p}{();}
+\PYG{k+kt}{int} \PYG{n+nf}{read\PYGZus{}controller}\PYG{p}{();}
+
+\PYG{c+cp}{\PYGZsh{}endif }\PYG{c+cm}{/* PS2\PYGZus{}H\PYGZus{} */}
+\end{Verbatim}

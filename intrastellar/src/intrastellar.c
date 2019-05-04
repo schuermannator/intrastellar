@@ -463,6 +463,7 @@ int main(void) {
 
 	int layer = 1;
 	int r, r1;
+	int speed;
 	while(game.play) {
 		game.num_bullets = 0;
 		game.num_rocks = 0;

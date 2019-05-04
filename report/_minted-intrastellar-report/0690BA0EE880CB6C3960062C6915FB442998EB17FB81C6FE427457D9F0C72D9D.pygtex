@@ -1,0 +1,271 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/*}
+\PYG{c+cm}{ * lcd.h}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *  Created on: Apr 28, 2019}
+\PYG{c+cm}{ *      Author: Zach}
+\PYG{c+cm}{ */}
+
+\PYG{c+cp}{\PYGZsh{}ifndef LCD\PYGZus{}H\PYGZus{}}
+\PYG{c+cp}{\PYGZsh{}define LCD\PYGZus{}H\PYGZus{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{spi\PYGZus{}begin}\PYG{p}{();}
+\PYG{k+kt}{void} \PYG{n+nf}{lcd\PYGZus{}spi\PYGZus{}setup}\PYG{p}{();}
+\PYG{k+kt}{void} \PYG{n+nf}{lcd\PYGZus{}init}\PYG{p}{();}
+\PYG{k+kt}{void} \PYG{n+nf}{lcd\PYGZus{}reset}\PYG{p}{();}
+
+\PYG{c+c1}{// graphics}
+\PYG{k+kt}{void} \PYG{n+nf}{lcd\PYGZus{}graphics\PYGZus{}mode}\PYG{p}{();}
+\PYG{k+kt}{void} \PYG{n+nf}{lcd\PYGZus{}fill\PYGZus{}screen}\PYG{p}{(}\PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{color}\PYG{p}{);}
+\PYG{k+kt}{bool} \PYG{n+nf}{lcd\PYGZus{}wait\PYGZus{}poll}\PYG{p}{(}\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{regname}\PYG{p}{,} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{waitflag}\PYG{p}{);}
+\PYG{k+kt}{void} \PYG{n+nf}{lcd\PYGZus{}rect\PYGZus{}helper}\PYG{p}{(}\PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{x}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{y}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{w}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{h}\PYG{p}{,} \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{color}\PYG{p}{,} \PYG{k+kt}{bool} \PYG{n}{filled}\PYG{p}{);}
+\PYG{k+kt}{void} \PYG{n+nf}{lcd\PYGZus{}fill\PYGZus{}screen}\PYG{p}{(}\PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{color}\PYG{p}{);}
+\PYG{k+kt}{void} \PYG{n+nf}{lcd\PYGZus{}fill\PYGZus{}rect}\PYG{p}{(}\PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{x}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{y}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{w}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{h}\PYG{p}{,} \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{color}\PYG{p}{);}
+\PYG{k+kt}{void} \PYG{n+nf}{lcd\PYGZus{}draw\PYGZus{}line}\PYG{p}{(}\PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{x0}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{y0}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{x1}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{y1}\PYG{p}{,} \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{color}\PYG{p}{);}
+\PYG{k+kt}{void} \PYG{n+nf}{lcd\PYGZus{}draw\PYGZus{}bullet}\PYG{p}{(}\PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{x}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{y}\PYG{p}{);}
+\PYG{k+kt}{void} \PYG{n+nf}{lcd\PYGZus{}fill\PYGZus{}circle}\PYG{p}{(}\PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{x}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{y}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{r}\PYG{p}{,} \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{color}\PYG{p}{);}
+\PYG{k+kt}{void} \PYG{n+nf}{lcd\PYGZus{}circle\PYGZus{}helper}\PYG{p}{(}\PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{x}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{y}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{r}\PYG{p}{,} \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{color}\PYG{p}{,} \PYG{k+kt}{bool} \PYG{n}{filled}\PYG{p}{);}
+\PYG{k+kt}{void} \PYG{n+nf}{lcd\PYGZus{}triangle\PYGZus{}helper}\PYG{p}{(}\PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{x0}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{y0}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{x1}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{y1}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{x2}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{y2}\PYG{p}{,} \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{color}\PYG{p}{,} \PYG{k+kt}{bool} \PYG{n}{filled}\PYG{p}{);}
+\PYG{k+kt}{void} \PYG{n+nf}{lcd\PYGZus{}fill\PYGZus{}triangle}\PYG{p}{(}\PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{x0}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{y0}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{x1}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{y1}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{x2}\PYG{p}{,} \PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{y2}\PYG{p}{,} \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{color}\PYG{p}{);}
+
+\PYG{c+cm}{/* Text functions */}
+\PYG{k+kt}{void}    \PYG{n+nf}{lcd\PYGZus{}text\PYGZus{}mode}\PYG{p}{(}\PYG{k+kt}{void}\PYG{p}{);}
+\PYG{k+kt}{void}    \PYG{n+nf}{lcd\PYGZus{}text\PYGZus{}set\PYGZus{}cursor}\PYG{p}{(}\PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{x}\PYG{p}{,} \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{y}\PYG{p}{);}
+\PYG{k+kt}{void}    \PYG{n+nf}{lcd\PYGZus{}text\PYGZus{}color}\PYG{p}{(}\PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{foreColor}\PYG{p}{,} \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{bgColor}\PYG{p}{);}
+\PYG{k+kt}{void}    \PYG{n+nf}{lcd\PYGZus{}text\PYGZus{}transparent}\PYG{p}{(}\PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{foreColor}\PYG{p}{);}
+\PYG{c+c1}{//void    textEnlarge(uint8\PYGZus{}t scale);}
+\PYG{k+kt}{void}    \PYG{n+nf}{lcd\PYGZus{}text\PYGZus{}write}\PYG{p}{(}\PYG{k}{const} \PYG{k+kt}{char}\PYG{o}{*} \PYG{n}{buffer}\PYG{p}{,} \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{len}\PYG{p}{);}
+\PYG{k+kt}{void}    \PYG{n+nf}{lcd\PYGZus{}cursor\PYGZus{}blink}\PYG{p}{(}\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{rate}\PYG{p}{);}
+
+\PYG{c+cm}{/* Low level access */}
+\PYG{k+kt}{void}    \PYG{n+nf}{lcd\PYGZus{}write\PYGZus{}reg}\PYG{p}{(}\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{reg}\PYG{p}{,} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{val}\PYG{p}{);}
+\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n+nf}{lcd\PYGZus{}read\PYGZus{}reg}\PYG{p}{(}\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{reg}\PYG{p}{);}
+\PYG{k+kt}{void}    \PYG{n+nf}{lcd\PYGZus{}write\PYGZus{}data}\PYG{p}{(}\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{d}\PYG{p}{);}
+\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n+nf}{lcd\PYGZus{}read\PYGZus{}data}\PYG{p}{(}\PYG{k+kt}{void}\PYG{p}{);}
+\PYG{k+kt}{void}    \PYG{n+nf}{lcd\PYGZus{}write\PYGZus{}command}\PYG{p}{(}\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{d}\PYG{p}{);}
+\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n+nf}{lcd\PYGZus{}read\PYGZus{}status}\PYG{p}{(}\PYG{k+kt}{void}\PYG{p}{);}
+\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n+nf}{lcd\PYGZus{}read\PYGZus{}data}\PYG{p}{();}
+
+\PYG{c+c1}{// Colors (RGB565)}
+\PYG{c+cp}{\PYGZsh{}define	RA8875\PYGZus{}BLACK            0x0000 }\PYG{c+c1}{///\PYGZlt{} Black Color}
+\PYG{c+cp}{\PYGZsh{}define	RA8875\PYGZus{}BLUE             0x001F }\PYG{c+c1}{///\PYGZlt{} Blue Color}
+\PYG{c+cp}{\PYGZsh{}define	RA8875\PYGZus{}RED              0xF800 }\PYG{c+c1}{///\PYGZlt{} Red Color}
+\PYG{c+cp}{\PYGZsh{}define	RA8875\PYGZus{}GREEN            0x07E0 }\PYG{c+c1}{///\PYGZlt{} Green Color}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}CYAN             0x07FF }\PYG{c+c1}{///\PYGZlt{} Cyan Color}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}MAGENTA          0xF81F }\PYG{c+c1}{///\PYGZlt{} Magenta Color}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}YELLOW           0xFFE0 }\PYG{c+c1}{///\PYGZlt{} Yellow Color}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}WHITE            0xFFFF }\PYG{c+c1}{///\PYGZlt{} White Color}
+
+\PYG{c+c1}{// Command/Data pins for SPI}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}DATAWRITE        0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}DATAREAD         0x40}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}CMDWRITE         0x80}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}CMDREAD          0xC0}
+
+\PYG{c+c1}{// Registers \PYGZam{} bits}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWRR             0x01}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWRR\PYGZus{}DISPON      0x80}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWRR\PYGZus{}DISPOFF     0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWRR\PYGZus{}SLEEP       0x02}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWRR\PYGZus{}NORMAL      0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWRR\PYGZus{}SOFTRESET   0x01}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}MRWC             0x02}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}GPIOX            0xC7}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PLLC1            0x88}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PLLC1\PYGZus{}PLLDIV2    0x80}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PLLC1\PYGZus{}PLLDIV1    0x00}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PLLC2            0x89}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PLLC2\PYGZus{}DIV1       0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PLLC2\PYGZus{}DIV2       0x01}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PLLC2\PYGZus{}DIV4       0x02}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PLLC2\PYGZus{}DIV8       0x03}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PLLC2\PYGZus{}DIV16      0x04}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PLLC2\PYGZus{}DIV32      0x05}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PLLC2\PYGZus{}DIV64      0x06}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PLLC2\PYGZus{}DIV128     0x07}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}SYSR             0x10}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}SYSR\PYGZus{}8BPP        0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}SYSR\PYGZus{}16BPP       0x0C}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}SYSR\PYGZus{}MCU8        0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}SYSR\PYGZus{}MCU16       0x03}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PCSR             0x04}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PCSR\PYGZus{}PDATR       0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PCSR\PYGZus{}PDATL       0x80}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PCSR\PYGZus{}CLK         0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PCSR\PYGZus{}2CLK        0x01}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PCSR\PYGZus{}4CLK        0x02}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PCSR\PYGZus{}8CLK        0x03}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}HDWR             0x14}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}HNDFTR           0x15}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}HNDFTR\PYGZus{}DE\PYGZus{}HIGH   0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}HNDFTR\PYGZus{}DE\PYGZus{}LOW    0x80}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}HNDR             0x16}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}HSTR             0x17}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}HPWR             0x18}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}HPWR\PYGZus{}LOW         0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}HPWR\PYGZus{}HIGH        0x80}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}VDHR0            0x19}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}VDHR1            0x1A}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}VNDR0            0x1B}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}VNDR1            0x1C}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}VSTR0            0x1D}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}VSTR1            0x1E}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}VPWR             0x1F}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}VPWR\PYGZus{}LOW         0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}VPWR\PYGZus{}HIGH        0x80}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}HSAW0            0x30}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}HSAW1            0x31}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}VSAW0            0x32}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}VSAW1            0x33}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}HEAW0            0x34}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}HEAW1            0x35}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}VEAW0            0x36}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}VEAW1            0x37}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}MCLR             0x8E}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}MCLR\PYGZus{}START       0x80}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}MCLR\PYGZus{}STOP        0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}MCLR\PYGZus{}READSTATUS  0x80}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}MCLR\PYGZus{}FULL        0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}MCLR\PYGZus{}ACTIVE      0x40}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}DCR                    0x90}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}DCR\PYGZus{}LINESQUTRI\PYGZus{}START   0x80}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}DCR\PYGZus{}LINESQUTRI\PYGZus{}STOP    0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}DCR\PYGZus{}LINESQUTRI\PYGZus{}STATUS  0x80}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}DCR\PYGZus{}CIRCLE\PYGZus{}START       0x40}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}DCR\PYGZus{}CIRCLE\PYGZus{}STATUS      0x40}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}DCR\PYGZus{}CIRCLE\PYGZus{}STOP        0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}DCR\PYGZus{}FILL               0x20}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}DCR\PYGZus{}NOFILL             0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}DCR\PYGZus{}DRAWLINE           0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}DCR\PYGZus{}DRAWTRIANGLE       0x01}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}DCR\PYGZus{}DRAWSQUARE         0x10}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}ELLIPSE                0xA0}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}ELLIPSE\PYGZus{}STATUS         0x80}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}MWCR0            0x40}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}MWCR0\PYGZus{}GFXMODE    0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}MWCR0\PYGZus{}TXTMODE    0x80}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}MWCR0\PYGZus{}CURSOR     0x40}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}MWCR0\PYGZus{}BLINK      0x20}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}MWCR0\PYGZus{}DIRMASK    0x0C }\PYG{c+c1}{///\PYGZlt{} Bitmask for Write Direction}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}MWCR0\PYGZus{}LRTD       0x00 }\PYG{c+c1}{///\PYGZlt{} Left\PYGZhy{}\PYGZgt{}Right then Top\PYGZhy{}\PYGZgt{}Down}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}MWCR0\PYGZus{}RLTD       0x04 }\PYG{c+c1}{///\PYGZlt{} Right\PYGZhy{}\PYGZgt{}Left then Top\PYGZhy{}\PYGZgt{}Down}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}MWCR0\PYGZus{}TDLR       0x08 }\PYG{c+c1}{///\PYGZlt{} Top\PYGZhy{}\PYGZgt{}Down then Left\PYGZhy{}\PYGZgt{}Right}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}MWCR0\PYGZus{}DTLR       0x0C }\PYG{c+c1}{///\PYGZlt{} Down\PYGZhy{}\PYGZgt{}Top then Left\PYGZhy{}\PYGZgt{}Right}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}BTCR             0x44}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}CURH0            0x46}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}CURH1            0x47}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}CURV0            0x48}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}CURV1            0x49}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}P1CR             0x8A}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}P1CR\PYGZus{}ENABLE      0x80}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}P1CR\PYGZus{}DISABLE     0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}P1CR\PYGZus{}CLKOUT      0x10}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}P1CR\PYGZus{}PWMOUT      0x00}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}P1DCR            0x8B}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}P2CR             0x8C}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}P2CR\PYGZus{}ENABLE      0x80}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}P2CR\PYGZus{}DISABLE     0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}P2CR\PYGZus{}CLKOUT      0x10}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}P2CR\PYGZus{}PWMOUT      0x00}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}P2DCR            0x8D}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWM\PYGZus{}CLK\PYGZus{}DIV1     0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWM\PYGZus{}CLK\PYGZus{}DIV2     0x01}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWM\PYGZus{}CLK\PYGZus{}DIV4     0x02}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWM\PYGZus{}CLK\PYGZus{}DIV8     0x03}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWM\PYGZus{}CLK\PYGZus{}DIV16    0x04}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWM\PYGZus{}CLK\PYGZus{}DIV32    0x05}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWM\PYGZus{}CLK\PYGZus{}DIV64    0x06}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWM\PYGZus{}CLK\PYGZus{}DIV128   0x07}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWM\PYGZus{}CLK\PYGZus{}DIV256   0x08}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWM\PYGZus{}CLK\PYGZus{}DIV512   0x09}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWM\PYGZus{}CLK\PYGZus{}DIV1024  0x0A}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWM\PYGZus{}CLK\PYGZus{}DIV2048  0x0B}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWM\PYGZus{}CLK\PYGZus{}DIV4096  0x0C}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWM\PYGZus{}CLK\PYGZus{}DIV8192  0x0D}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWM\PYGZus{}CLK\PYGZus{}DIV16384 0x0E}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}PWM\PYGZus{}CLK\PYGZus{}DIV32768 0x0F}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0                  0x70}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}ENABLE           0x80}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}DISABLE          0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}WAIT\PYGZus{}512CLK      0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}WAIT\PYGZus{}1024CLK     0x10}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}WAIT\PYGZus{}2048CLK     0x20}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}WAIT\PYGZus{}4096CLK     0x30}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}WAIT\PYGZus{}8192CLK     0x40}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}WAIT\PYGZus{}16384CLK    0x50}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}WAIT\PYGZus{}32768CLK    0x60}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}WAIT\PYGZus{}65536CLK    0x70}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}WAKEENABLE       0x08}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}WAKEDISABLE      0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}ADCCLK\PYGZus{}DIV1      0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}ADCCLK\PYGZus{}DIV2      0x01}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}ADCCLK\PYGZus{}DIV4      0x02}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}ADCCLK\PYGZus{}DIV8      0x03}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}ADCCLK\PYGZus{}DIV16     0x04}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}ADCCLK\PYGZus{}DIV32     0x05}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}ADCCLK\PYGZus{}DIV64     0x06}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR0\PYGZus{}ADCCLK\PYGZus{}DIV128    0x07}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR1            0x71}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR1\PYGZus{}AUTO       0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR1\PYGZus{}MANUAL     0x40}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR1\PYGZus{}VREFINT    0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR1\PYGZus{}VREFEXT    0x20}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR1\PYGZus{}DEBOUNCE   0x04}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR1\PYGZus{}NODEBOUNCE 0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR1\PYGZus{}IDLE       0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR1\PYGZus{}WAIT       0x01}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR1\PYGZus{}LATCHX     0x02}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPCR1\PYGZus{}LATCHY     0x03}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPXH             0x72}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPYH             0x73}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}TPXYL            0x74}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}INTC1            0xF0}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}INTC1\PYGZus{}KEY        0x10}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}INTC1\PYGZus{}DMA        0x08}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}INTC1\PYGZus{}TP         0x04}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}INTC1\PYGZus{}BTE        0x02}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}INTC2            0xF1}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}INTC2\PYGZus{}KEY        0x10}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}INTC2\PYGZus{}DMA        0x08}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}INTC2\PYGZus{}TP         0x04}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}INTC2\PYGZus{}BTE        0x02}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}SCROLL\PYGZus{}BOTH      0x00}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}SCROLL\PYGZus{}LAYER1    0x40}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}SCROLL\PYGZus{}LAYER2    0x80}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}SCROLL\PYGZus{}BUFFER    0xC0}
+
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}LTPR0 			0x52}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}DPCR				0x20}
+\PYG{c+cp}{\PYGZsh{}define RA8875\PYGZus{}MWCR1			0x41}
+
+\PYG{c+cp}{\PYGZsh{}endif }\PYG{c+cm}{/* LCD\PYGZus{}H\PYGZus{} */}
+\end{Verbatim}

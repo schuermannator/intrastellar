@@ -1,0 +1,23 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/*}
+\PYG{c+cm}{ * eeprom.h}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ *  Created on: Apr 28, 2019}
+\PYG{c+cm}{ *      Author: Zach}
+\PYG{c+cm}{ */}
+
+\PYG{c+cp}{\PYGZsh{}ifndef EEPROM\PYGZus{}H\PYGZus{}}
+\PYG{c+cp}{\PYGZsh{}define EEPROM\PYGZus{}H\PYGZus{}}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}intrastellar.h\PYGZdq{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{i2c\PYGZus{}start}\PYG{p}{();}
+\PYG{k+kt}{void} \PYG{n+nf}{i2c\PYGZus{}write}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{data}\PYG{p}{);}
+\PYG{k+kt}{int} \PYG{n+nf}{i2c\PYGZus{}read}\PYG{p}{();}
+\PYG{k+kt}{void} \PYG{n+nf}{i2c\PYGZus{}stop}\PYG{p}{();}
+\PYG{k+kt}{void} \PYG{n+nf}{eep\PYGZus{}setup}\PYG{p}{();}
+\PYG{k+kt}{void} \PYG{n+nf}{eep\PYGZus{}write}\PYG{p}{(}\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{data}\PYG{p}{);}
+\PYG{k+kt}{int} \PYG{n+nf}{eep\PYGZus{}read}\PYG{p}{();}
+
+\PYG{c+cp}{\PYGZsh{}endif }\PYG{c+cm}{/* EEPROM\PYGZus{}H\PYGZus{} */}
+\end{Verbatim}
